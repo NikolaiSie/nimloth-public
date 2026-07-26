@@ -23,6 +23,7 @@ module "artifact_registry" {
   region        = var.region
   repository_id = "nimloth-public"
   description   = "Artifact Registry repository for Nimloth public web images."
+  depends_on    = [module.project_services]
 }
 
 module "runtime_service_account" {
@@ -34,6 +35,7 @@ module "runtime_service_account" {
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter",
   ]
+  depends_on = [module.project_services]
 }
 
 module "website" {
