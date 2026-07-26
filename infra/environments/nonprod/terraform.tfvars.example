@@ -1,3 +1,4 @@
+allow_unauthenticated = false
 container_image   = "us-east4-docker.pkg.dev/nimloth-public-nonprod/nimloth-public/nimloth-public:dev"
 data_api_base_url = "https://prod-readonly-data-api.example.internal"
 data_api_audience = "https://prod-readonly-data-api.example.internal"

@@ -41,6 +41,7 @@ module "runtime_service_account" {
 module "website" {
   count                 = var.deploy_website ? 1 : 0
   source                = "../../modules/cloud_run_service"
+  allow_unauthenticated = var.allow_unauthenticated
   project_id            = var.project_id
   region                = var.region
   service_name          = "nimloth-public-web"

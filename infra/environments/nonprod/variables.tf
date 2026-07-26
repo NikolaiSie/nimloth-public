@@ -14,6 +14,12 @@ variable "deploy_website" {
   default     = true
 }
 
+variable "allow_unauthenticated" {
+  type        = bool
+  description = "Whether the Cloud Run service is public."
+  default     = false
+}
+
 variable "data_api_audience" {
   type        = string
   description = "Audience or base URL for service-to-service auth."

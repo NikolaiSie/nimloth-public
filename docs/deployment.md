@@ -59,6 +59,8 @@ The nonprod workflow is designed to run on every push to `dev` and uses two Terr
 
 That removes the first-deploy circular dependency between Artifact Registry and the Cloud Run service image reference.
 
+By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy. Production can still be configured as public later.
+
 ## Manual local Terraform flow
 
 ```bash
