@@ -34,21 +34,20 @@ Before full GitHub-based deployments can be turned on, the following need to exi
 - `GCP_PROJECT_ID=nimloth-public-nonprod`
 - `GCP_REGION=us-east4`
 - `TF_STATE_BUCKET=<nonprod-state-bucket>`
-- `DATA_API_BASE_URL=<prod-read-only-data-api-base-url>`
-- `DATA_API_AUDIENCE=<prod-read-only-data-api-audience>`
+- `NIMLOTH_DATA_API_BASE_URL=<prod-read-only-data-api-base-url>`
 
 ### Prod
 
 - `GCP_PROJECT_ID=nimloth-public-prod`
 - `GCP_REGION=us-east4`
 - `TF_STATE_BUCKET=<prod-state-bucket>`
-- `DATA_API_BASE_URL=<prod-private-api-base-url>`
-- `DATA_API_AUDIENCE=<prod-private-api-audience>`
+- `NIMLOTH_DATA_API_BASE_URL=<prod-private-api-base-url>`
 
 ## Suggested GitHub secrets or protected variables
 
 - `GCP_WORKLOAD_IDENTITY_PROVIDER`
 - `GCP_DEPLOYER_SERVICE_ACCOUNT`
+- `NIMLOTH_DATA_API_KEY`
 
 ## What the nonprod workflow now expects
 
@@ -81,7 +80,8 @@ The repository includes CI and environment-specific workflow entry points, but i
 If the production data API is hosted on Cloud Run, the clean default is:
 
 1. Give the non-production website its own runtime service account in `nimloth-public-nonprod`
-2. Allow that identity to invoke only the production API service or gateway that exposes public-safe read-only summaries
+2. Store the shared API key only in the website environment secret store, never in client code
 3. Keep write paths and sensitive endpoints behind separate services, routes, or authorization checks
 
 The current Terraform defaults create the runtime service account as `nimloth-public-site@<project-id>.iam.gserviceaccount.com`.
+If the API key is not set yet, the website stays in mock mode rather than failing deployment.

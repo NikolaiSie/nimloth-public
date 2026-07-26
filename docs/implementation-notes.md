@@ -8,6 +8,7 @@
 - Terraform environment roots are separate rather than using workspaces so production and non-production remain explicit
 - `dev` is intended to auto-deploy to non-production on every push
 - Non-production is allowed to consume production data only through a narrow read-only API surface, not through broad shared credentials
+- The current data API contract is server-side `X-API-Key` authentication rather than browser access or workload identity
 
 ## Pending refinements
 

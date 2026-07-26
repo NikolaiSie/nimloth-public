@@ -13,10 +13,7 @@ export async function GET() {
         status: "degraded",
         asOf: new Date().toISOString(),
         headline: "Market snapshot unavailable",
-        summary:
-          error instanceof Error
-            ? error.message
-            : "Unexpected error while loading market snapshot.",
+        summary: "The upstream data API is currently unavailable.",
         points: [],
       },
       { status: 503 },

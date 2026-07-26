@@ -56,8 +56,9 @@ jobs:
             -var="container_image=" \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
             -var="region=${{ vars.GCP_REGION }}" \
-            -var="data_api_base_url=${{ vars.DATA_API_BASE_URL }}" \
-            -var="data_api_audience=${{ vars.DATA_API_AUDIENCE }}"
+            -var="data_api_base_url=${{ vars.NIMLOTH_DATA_API_BASE_URL }}" \
+            -var="data_api_key=" \
+            -var="data_api_audience="
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
@@ -72,6 +73,8 @@ jobs:
 
       - name: Deploy website infrastructure
         working-directory: infra/environments/nonprod
+        env:
+          TF_VAR_data_api_key: ${{ secrets.NIMLOTH_DATA_API_KEY }}
         run: |
           terraform init -input=false \
             -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
@@ -81,8 +84,9 @@ jobs:
             -var="container_image=${{ env.IMAGE_URI }}" \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
             -var="region=${{ vars.GCP_REGION }}" \
-            -var="data_api_base_url=${{ vars.DATA_API_BASE_URL }}" \
-            -var="data_api_audience=${{ vars.DATA_API_AUDIENCE }}"
+            -var="data_api_base_url=${{ vars.NIMLOTH_DATA_API_BASE_URL }}" \
+            -var="data_api_key=${{ secrets.NIMLOTH_DATA_API_KEY }}" \
+            -var="data_api_audience="
 
       - name: Show deployed URL
         working-directory: infra/environments/nonprod

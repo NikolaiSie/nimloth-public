@@ -74,7 +74,7 @@ tests/                Unit tests
 
 The site is built as a container and deployed to `Cloud Run`. The public app talks to the separate data platform only from the server side. In GCP, the recommended default is workload identity based service-to-service authentication, not browser credentials and not embedded shared secrets.
 
-To avoid duplicating infrastructure cost, the non-production website is expected to read from a narrow, read-only production data API surface. That integration should be explicitly scoped so the non-production service account can only call safe public-summary endpoints.
+To avoid duplicating infrastructure cost, the non-production website is expected to read from a narrow, read-only production data API surface. That integration must stay server-side and use the upstream API contract directly: `NIMLOTH_DATA_API_BASE_URL` plus a server-side `NIMLOTH_DATA_API_KEY` sent in the `X-API-Key` header.
 
 ## Next design decisions to review together
 

@@ -22,12 +22,20 @@ variable "allow_unauthenticated" {
 
 variable "data_api_audience" {
   type        = string
-  description = "Audience or base URL for service-to-service auth."
+  description = "Legacy placeholder retained for compatibility with older deploy wiring."
+  default     = ""
 }
 
 variable "data_api_base_url" {
   type        = string
   description = "Base URL for the private data API."
+}
+
+variable "data_api_key" {
+  type        = string
+  description = "Server-side API key for the private data API."
+  default     = ""
+  sensitive   = true
 }
 
 variable "project_id" {

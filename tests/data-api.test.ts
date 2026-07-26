@@ -1,14 +1,5 @@
 import { vi } from "vitest";
 
-const requestHeadersMock = vi.fn();
-const getIdTokenClientMock = vi.fn();
-
-vi.mock("google-auth-library", () => ({
-  GoogleAuth: vi.fn().mockImplementation(() => ({
-    getIdTokenClient: getIdTokenClientMock,
-  })),
-}));
-
 describe("data api integration", () => {
   const originalEnv = process.env;
 
@@ -34,24 +25,34 @@ describe("data api integration", () => {
 
   it("uses an identity token in live mode when an audience is configured", async () => {
     process.env.DATA_API_MODE = "live";
-    process.env.DATA_API_BASE_URL = "https://data.example.internal";
-    process.env.DATA_API_AUDIENCE = "https://data.example.internal";
-
-    requestHeadersMock.mockResolvedValue({
-      authorization: "Bearer id-token",
-    });
-    getIdTokenClientMock.mockResolvedValue({
-      getRequestHeaders: requestHeadersMock,
-    });
+    process.env.NIMLOTH_DATA_API_BASE_URL = "https://data.example.internal";
+    process.env.NIMLOTH_DATA_API_KEY = "top-secret";
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        status: "healthy",
-        asOf: "2026-07-26T00:00:00.000Z",
-        headline: "Live snapshot",
-        summary: "Loaded from private API",
-        points: [],
+        latest_date: "2026-07-25",
+        updated_at: "2026-07-26T00:00:00.000Z",
+      }),
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        latest_date: "2026-07-25",
+        updated_at: "2026-07-26T00:00:00.000Z",
+      }),
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        date: "2026-07-25",
+        aggregation: "mean",
+        country: "ALL",
+        cap: "ALL",
+        value: 0.1234,
+        signal: -0.4567,
+        observations: 250,
       }),
     });
 
@@ -60,13 +61,25 @@ describe("data api integration", () => {
     const { getMarketSnapshot } = await import("@/lib/data-api");
     const result = await getMarketSnapshot();
 
-    expect(getIdTokenClientMock).toHaveBeenCalledWith("https://data.example.internal");
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://data.example.internal/public/market-snapshot",
+      "https://data.example.internal/v1/momentum-matrix/metadata",
       expect.objectContaining({
         method: "GET",
+        headers: {
+          "X-API-Key": "top-secret",
+        },
       }),
     );
-    expect(result.headline).toBe("Live snapshot");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://data.example.internal/v1/momentum-matrix/latest?country=ALL&cap=ALL&aggregation=mean",
+      expect.objectContaining({
+        method: "GET",
+        headers: {
+          "X-API-Key": "top-secret",
+        },
+      }),
+    );
+    expect(result.headline).toBe("Momentum matrix latest snapshot");
+    expect(result.points).toContain("Value: 0.1234");
   });
 });

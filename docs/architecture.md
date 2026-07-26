@@ -22,7 +22,7 @@ Browser
 
 - The browser never receives private API credentials
 - Local development defaults to mock mode
-- In GCP, the public service is expected to authenticate to the private API with workload identity or identity tokens
+- In deployed environments, the public service authenticates to the private API with a server-side API key header
 - The public website service account is intentionally isolated so its permissions can stay minimal
 - If non-production reads production data, it must read only through a curated read-only API path and receive only the exact permission needed for that path
 
