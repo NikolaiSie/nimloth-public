@@ -62,6 +62,13 @@ jobs:
             --project="${{ vars.GCP_PROJECT_ID }}" \
             --location="${{ vars.GCP_REGION }}" >/dev/null 2>&1; then
             terraform import -input=false \
+              -var="deploy_website=false" \
+              -var="container_image=" \
+              -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+              -var="region=${{ vars.GCP_REGION }}" \
+              -var="data_api_base_url=${{ vars.NIMLOTH_DATA_API_BASE_URL }}" \
+              -var="data_api_key=" \
+              -var="data_api_audience=" \
               'module.artifact_registry.google_artifact_registry_repository.repository' \
               "projects/${{ vars.GCP_PROJECT_ID }}/locations/${{ vars.GCP_REGION }}/repositories/nimloth-public" \
               || true
@@ -71,6 +78,13 @@ jobs:
             "nimloth-public-site@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
             --project="${{ vars.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
             terraform import -input=false \
+              -var="deploy_website=false" \
+              -var="container_image=" \
+              -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+              -var="region=${{ vars.GCP_REGION }}" \
+              -var="data_api_base_url=${{ vars.NIMLOTH_DATA_API_BASE_URL }}" \
+              -var="data_api_key=" \
+              -var="data_api_audience=" \
               'module.runtime_service_account.google_service_account.this' \
               "projects/${{ vars.GCP_PROJECT_ID }}/serviceAccounts/nimloth-public-site@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
               || true
@@ -111,6 +125,13 @@ jobs:
             --project="${{ vars.GCP_PROJECT_ID }}" \
             --region="${{ vars.GCP_REGION }}" >/dev/null 2>&1; then
             terraform import -input=false \
+              -var="deploy_website=true" \
+              -var="container_image=${{ env.IMAGE_URI }}" \
+              -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+              -var="region=${{ vars.GCP_REGION }}" \
+              -var="data_api_base_url=${{ vars.NIMLOTH_DATA_API_BASE_URL }}" \
+              -var="data_api_key=${{ secrets.NIMLOTH_DATA_API_KEY }}" \
+              -var="data_api_audience=" \
               'module.website[0].google_cloud_run_v2_service.service' \
               "projects/${{ vars.GCP_PROJECT_ID }}/locations/${{ vars.GCP_REGION }}/services/nimloth-public-web" \
               || true
