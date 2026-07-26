@@ -81,3 +81,5 @@ If the production data API is hosted on Cloud Run, the clean default is:
 1. Give the non-production website its own runtime service account in `nimloth-public-nonprod`
 2. Allow that identity to invoke only the production API service or gateway that exposes public-safe read-only summaries
 3. Keep write paths and sensitive endpoints behind separate services, routes, or authorization checks
+
+The current Terraform defaults create the runtime service account as `nimloth-public-site@<project-id>.iam.gserviceaccount.com`.

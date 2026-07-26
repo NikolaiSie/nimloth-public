@@ -29,7 +29,7 @@ module "artifact_registry" {
 module "runtime_service_account" {
   source       = "../../modules/service_account"
   project_id   = var.project_id
-  account_id   = "nimloth-public-web"
+  account_id   = "nimloth-public-site"
   display_name = "Nimloth public website runtime"
   project_roles = [
     "roles/logging.logWriter",
