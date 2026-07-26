@@ -1,0 +1,37 @@
+variable "container_image" {
+  type        = string
+  description = "Container image to deploy."
+  default     = ""
+  validation {
+    condition     = !var.deploy_website || length(trimspace(var.container_image)) > 0
+    error_message = "container_image must be set when deploy_website is true."
+  }
+}
+
+variable "deploy_website" {
+  type        = bool
+  description = "Whether to deploy the Cloud Run website service."
+  default     = true
+}
+
+variable "data_api_audience" {
+  type        = string
+  description = "Audience or base URL for service-to-service auth."
+}
+
+variable "data_api_base_url" {
+  type        = string
+  description = "Base URL for the private data API."
+}
+
+variable "project_id" {
+  type        = string
+  description = "GCP project id."
+  default     = "nimloth-public-nonprod"
+}
+
+variable "region" {
+  type        = string
+  description = "GCP region."
+  default     = "us-east4"
+}

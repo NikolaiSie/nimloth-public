@@ -1,0 +1,89 @@
+name: Deploy Nonprod
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: nonprod
+    concurrency:
+      group: nonprod-deploy
+      cancel-in-progress: true
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run checks
+        run: npm run check
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Bootstrap nonprod infrastructure
+        working-directory: infra/environments/nonprod
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=nimloth-public/nonprod"
+          terraform apply -input=false -auto-approve \
+            -var="deploy_website=false" \
+            -var="container_image=" \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="region=${{ vars.GCP_REGION }}" \
+            -var="data_api_base_url=${{ vars.DATA_API_BASE_URL }}" \
+            -var="data_api_audience=${{ vars.DATA_API_AUDIENCE }}"
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/nimloth-public/nimloth-public:${{ github.sha }}
+        run: |
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+
+      - name: Deploy website infrastructure
+        working-directory: infra/environments/nonprod
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=nimloth-public/nonprod"
+          terraform apply -input=false -auto-approve \
+            -var="deploy_website=true" \
+            -var="container_image=${{ env.IMAGE_URI }}" \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="region=${{ vars.GCP_REGION }}" \
+            -var="data_api_base_url=${{ vars.DATA_API_BASE_URL }}" \
+            -var="data_api_audience=${{ vars.DATA_API_AUDIENCE }}"
+
+      - name: Show deployed URL
+        working-directory: infra/environments/nonprod
+        run: terraform output service_url

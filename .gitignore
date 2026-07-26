@@ -1,0 +1,16 @@
+.next/
+.npm-cache/
+coverage/
+node_modules/
+out/
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.env.production.local
+.env.test.local
+dist/
