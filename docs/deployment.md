@@ -57,6 +57,7 @@ The nonprod workflow is designed to run on every push to `dev` and uses two Terr
 2. A full apply with `deploy_website=true` and the pushed image URI
 
 That removes the first-deploy circular dependency between Artifact Registry and the Cloud Run service image reference.
+The workflow also imports known singleton resources into Terraform state before apply so reruns can recover from partially-created non-production infrastructure instead of repeatedly failing with `409 already exists`.
 
 By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy. Production can still be configured as public later.
 

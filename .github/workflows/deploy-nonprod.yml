@@ -45,12 +45,40 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Bootstrap nonprod infrastructure
+      - name: Initialize Terraform backend
         working-directory: infra/environments/nonprod
         run: |
           terraform init -input=false \
             -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
             -backend-config="prefix=nimloth-public/nonprod"
+
+      - name: Adopt existing bootstrap resources into Terraform state
+        working-directory: infra/environments/nonprod
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gcloud artifacts repositories describe nimloth-public \
+            --project="${{ vars.GCP_PROJECT_ID }}" \
+            --location="${{ vars.GCP_REGION }}" >/dev/null 2>&1; then
+            terraform import -input=false \
+              'module.artifact_registry.google_artifact_registry_repository.repository' \
+              "projects/${{ vars.GCP_PROJECT_ID }}/locations/${{ vars.GCP_REGION }}/repositories/nimloth-public" \
+              || true
+          fi
+
+          if gcloud iam service-accounts describe \
+            "nimloth-public-site@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --project="${{ vars.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+            terraform import -input=false \
+              'module.runtime_service_account.google_service_account.this' \
+              "projects/${{ vars.GCP_PROJECT_ID }}/serviceAccounts/nimloth-public-site@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+              || true
+          fi
+
+      - name: Bootstrap nonprod infrastructure
+        working-directory: infra/environments/nonprod
+        run: |
           terraform apply -input=false -auto-approve \
             -var="deploy_website=false" \
             -var="container_image=" \
@@ -73,12 +101,21 @@ jobs:
 
       - name: Deploy website infrastructure
         working-directory: infra/environments/nonprod
+        shell: bash
         env:
           TF_VAR_data_api_key: ${{ secrets.NIMLOTH_DATA_API_KEY }}
         run: |
-          terraform init -input=false \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="prefix=nimloth-public/nonprod"
+          set -euo pipefail
+
+          if gcloud run services describe nimloth-public-web \
+            --project="${{ vars.GCP_PROJECT_ID }}" \
+            --region="${{ vars.GCP_REGION }}" >/dev/null 2>&1; then
+            terraform import -input=false \
+              'module.website[0].google_cloud_run_v2_service.service' \
+              "projects/${{ vars.GCP_PROJECT_ID }}/locations/${{ vars.GCP_REGION }}/services/nimloth-public-web" \
+              || true
+          fi
+
           terraform apply -input=false -auto-approve \
             -var="deploy_website=true" \
             -var="container_image=${{ env.IMAGE_URI }}" \
