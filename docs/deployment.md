@@ -36,7 +36,7 @@ Before full GitHub-based deployments can be turned on, the following need to exi
 - `TF_STATE_BUCKET=<nonprod-state-bucket>`
 - `NIMLOTH_DATA_API_BASE_URL=<prod-read-only-data-api-base-url>`
 
-### Prod
+### Production
 
 - `GCP_PROJECT_ID=nimloth-public-prod`
 - `GCP_REGION=us-east4`
@@ -61,7 +61,7 @@ The workflow also imports known singleton resources into Terraform state before 
 
 By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy. Production can still be configured as public later.
 
-## What the prod workflow now expects
+## What the production workflow now expects
 
 The production workflow mirrors nonprod with a separate backend prefix and project:
 
