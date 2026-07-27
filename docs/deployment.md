@@ -36,7 +36,7 @@ Before full GitHub-based deployments can be turned on, the following need to exi
 - `TF_STATE_BUCKET=<nonprod-state-bucket>`
 - `NIMLOTH_DATA_API_BASE_URL=<prod-read-only-data-api-base-url>`
 
-### Prod
+### Production
 
 - `GCP_PROJECT_ID=nimloth-public-prod`
 - `GCP_REGION=us-east4`
@@ -59,9 +59,9 @@ The nonprod workflow is designed to run on every push to `dev` and uses two Terr
 That removes the first-deploy circular dependency between Artifact Registry and the Cloud Run service image reference.
 The workflow also imports known singleton resources into Terraform state before apply so reruns can recover from partially-created non-production infrastructure instead of repeatedly failing with `409 already exists`.
 
-By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy. Production can still be configured as public later.
+By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy.
 
-## What the prod workflow now expects
+## What the production workflow now expects
 
 The production workflow mirrors nonprod with a separate backend prefix and project:
 
@@ -70,6 +70,7 @@ The production workflow mirrors nonprod with a separate backend prefix and proje
 3. A full apply with `deploy_website=true`
 
 Like nonprod, it imports known singleton resources into Terraform state before apply so reruns can recover from partially-created production infrastructure instead of failing on `409 already exists`.
+Production also defaults to authenticated-only Cloud Run access so deployment succeeds in GCP organizations that block public IAM members. If you later want a public production site, you will need to either relax that org policy or front the service with an approved public access pattern.
 
 ## Manual local Terraform flow
 
