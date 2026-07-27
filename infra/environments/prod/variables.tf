@@ -17,7 +17,7 @@ variable "deploy_website" {
 variable "allow_unauthenticated" {
   type        = bool
   description = "Whether the Cloud Run service is public."
-  default     = true
+  default     = false
 }
 
 variable "data_api_audience" {
