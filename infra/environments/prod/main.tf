@@ -3,10 +3,16 @@ provider "google" {
   region  = var.region
 }
 
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
+}
+
 locals {
   project_services = [
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
+    "iap.googleapis.com",
     "run.googleapis.com",
   ]
 }
@@ -39,9 +45,13 @@ module "runtime_service_account" {
 }
 
 module "website" {
-  count                 = var.deploy_website ? 1 : 0
-  source                = "../../modules/cloud_run_service"
+  count  = var.deploy_website ? 1 : 0
+  source = "../../modules/cloud_run_service"
+  providers = {
+    google = google-beta
+  }
   allow_unauthenticated = var.allow_unauthenticated
+  iap_enabled           = var.iap_enabled
   project_id            = var.project_id
   region                = var.region
   service_name          = "nimloth-public-web"

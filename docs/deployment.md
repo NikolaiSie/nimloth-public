@@ -60,6 +60,7 @@ That removes the first-deploy circular dependency between Artifact Registry and 
 The workflow also imports known singleton resources into Terraform state before apply so reruns can recover from partially-created non-production infrastructure instead of repeatedly failing with `409 already exists`.
 
 By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy.
+Non-production now also enables direct Cloud Run IAP in Terraform, so browser access is preserved across deploys instead of relying on manual console state.
 
 ## What the production workflow now expects
 
@@ -71,6 +72,7 @@ The production workflow mirrors nonprod with a separate backend prefix and proje
 
 Like nonprod, it imports known singleton resources into Terraform state before apply so reruns can recover from partially-created production infrastructure instead of failing on `409 already exists`.
 Production also defaults to authenticated-only Cloud Run access so deployment succeeds in GCP organizations that block public IAM members. If you later want a public production site, you will need to either relax that org policy or front the service with an approved public access pattern.
+Production also enables direct Cloud Run IAP in Terraform. Keep user or group membership for `roles/iap.httpsResourceAccessor` out of the public repository unless you intentionally parameterize it.
 
 ## Manual local Terraform flow
 

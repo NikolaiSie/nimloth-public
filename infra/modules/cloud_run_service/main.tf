@@ -1,8 +1,9 @@
 resource "google_cloud_run_v2_service" "service" {
-  name     = var.service_name
-  location = var.region
-  project  = var.project_id
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name        = var.service_name
+  location    = var.region
+  project     = var.project_id
+  ingress     = "INGRESS_TRAFFIC_ALL"
+  iap_enabled = var.iap_enabled
 
   template {
     service_account = var.service_account_email

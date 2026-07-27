@@ -16,6 +16,12 @@ variable "env_vars" {
   default     = {}
 }
 
+variable "iap_enabled" {
+  type        = bool
+  description = "Whether direct Cloud Run IAP is enabled for the service."
+  default     = false
+}
+
 variable "image" {
   type        = string
   description = "Full container image reference."

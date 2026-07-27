@@ -20,6 +20,7 @@ This directory contains Terraform for the public website.
 - Artifact Registry repository for the app image
 - Runtime service account and project roles
 - Cloud Run service for the public website
+- Direct Cloud Run IAP enablement for authenticated browser access
 
 ## Not yet included
 

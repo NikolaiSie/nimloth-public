@@ -20,6 +20,12 @@ variable "allow_unauthenticated" {
   default     = false
 }
 
+variable "iap_enabled" {
+  type        = bool
+  description = "Whether to protect the Cloud Run service with direct IAP."
+  default     = true
+}
+
 variable "data_api_audience" {
   type        = string
   description = "Legacy placeholder retained for compatibility with older deploy wiring."
