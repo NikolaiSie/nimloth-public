@@ -8,12 +8,14 @@ export async function GET() {
     const snapshot = await getMarketSnapshot();
     return NextResponse.json(snapshot, { status: 200 });
   } catch (error) {
+    console.error("Market snapshot upstream error", error);
     return NextResponse.json(
       {
         status: "degraded",
         asOf: new Date().toISOString(),
-        headline: "Market snapshot unavailable",
-        summary: "The upstream data API is currently unavailable.",
+        headline: "Data API metadata auth failed",
+        summary:
+          "The website could not authenticate to or load upstream momentum metadata.",
         points: [],
       },
       { status: 503 },

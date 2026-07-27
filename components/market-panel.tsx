@@ -6,8 +6,9 @@ import type { MarketSnapshot } from "@/lib/data-api";
 const fallbackState: MarketSnapshot = {
   status: "loading",
   asOf: "",
-  headline: "Loading market snapshot",
-  summary: "The public panel is requesting a read-only summary.",
+  headline: "Loading data API metadata auth check",
+  summary:
+    "The public panel is checking upstream metadata from server-side code.",
   points: [],
 };
 
@@ -32,9 +33,8 @@ export function MarketPanel() {
           setSnapshot({
             status: "degraded",
             asOf: "",
-            headline: "Market snapshot unavailable",
-            summary:
-              "The public route could not load a market summary. Local development can continue with mock mode.",
+            headline: "Data API metadata auth failed",
+            summary: "The public route could not load upstream metadata.",
             points: [],
           });
         }
