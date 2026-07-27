@@ -320,6 +320,175 @@ img {
   padding: 4rem 0 2rem;
 }
 
+.research-overview {
+  padding: 1.6rem;
+  display: grid;
+  gap: 1.3rem;
+}
+
+.research-overview__header,
+.research-overview__meta,
+.research-filters,
+.research-overview__footer {
+  display: flex;
+  gap: 1rem;
+}
+
+.research-overview__header {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.research-overview__meta {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.research-overview__intro,
+.research-overview__footer p,
+.research-error p {
+  max-width: 72ch;
+  margin-bottom: 0;
+}
+
+.research-filters {
+  flex-wrap: wrap;
+}
+
+.research-filter {
+  min-width: 11rem;
+  display: grid;
+  gap: 0.45rem;
+  font-family: "Avenir Next Condensed", "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.research-filter select {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  border-radius: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.research-error {
+  border-radius: 1rem;
+  border: 1px solid rgba(197, 138, 51, 0.35);
+  background: rgba(197, 138, 51, 0.1);
+  padding: 1rem;
+}
+
+.research-error h3 {
+  margin-top: 0;
+  margin-bottom: 0.4rem;
+}
+
+.heatmap-shell {
+  overflow: hidden;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 0.45rem;
+  align-items: stretch;
+  width: 100%;
+  grid-template-columns: minmax(8.5rem, 1.25fr) repeat(13, minmax(0, 1fr));
+}
+
+.heatmap-corner,
+.heatmap-column-label,
+.heatmap-row-label,
+.heatmap-cell {
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+}
+
+.heatmap-corner,
+.heatmap-column-label,
+.heatmap-row-label {
+  background: rgba(255, 248, 239, 0.9);
+}
+
+.heatmap-corner,
+.heatmap-column-label {
+  padding: 0.55rem 0.3rem;
+  font-family: "Avenir Next Condensed", "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.62rem;
+  line-height: 1.15;
+  color: var(--muted);
+  text-align: center;
+}
+
+.heatmap-row {
+  display: contents;
+}
+
+.heatmap-row-label {
+  padding: 0.65rem 0.7rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.heatmap-cell {
+  position: relative;
+  min-height: 3.4rem;
+  display: grid;
+  place-items: center;
+  padding: 0.4rem 0.2rem;
+  text-align: center;
+  font-family: "Avenir Next Condensed", "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  cursor: default;
+}
+
+.heatmap-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.55rem);
+  transform: translateX(-50%);
+  width: 12rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(22, 34, 31, 0.14);
+  background: rgba(255, 248, 239, 0.98);
+  box-shadow: 0 18px 45px rgba(15, 33, 29, 0.18);
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+  z-index: 5;
+}
+
+.heatmap-cell:hover .heatmap-tooltip,
+.heatmap-cell:focus-visible .heatmap-tooltip {
+  opacity: 1;
+}
+
+.heatmap-tooltip p {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.heatmap-tooltip__title {
+  margin-bottom: 0.35rem !important;
+  font-size: 0.72rem !important;
+  color: var(--accent-strong);
+}
+
 .page-hero__meta,
 .article-meta {
   display: flex;
@@ -407,6 +576,27 @@ img {
     grid-template-columns: 1fr;
   }
 
+  .heatmap-grid {
+    grid-template-columns: minmax(7rem, 1.15fr) repeat(13, minmax(0, 1fr));
+  }
+
+  .heatmap-row-label {
+    font-size: 0.72rem;
+  }
+
+  .heatmap-cell {
+    min-height: 2.8rem;
+    font-size: 0.62rem;
+  }
+
+  .research-overview__header {
+    flex-direction: column;
+  }
+
+  .research-overview__meta {
+    justify-content: flex-start;
+  }
+
   .site-header__inner,
   .site-footer__inner,
   .section-heading {
@@ -425,7 +615,8 @@ img {
   .article,
   .banner,
   .metric-card,
-  .article-list__item {
+  .article-list__item,
+  .research-overview {
     padding: 1.2rem;
   }
 
@@ -433,5 +624,22 @@ img {
     width: 100%;
     justify-content: space-between;
     gap: 0.7rem;
+  }
+
+  .heatmap-grid {
+    gap: 0.3rem;
+  }
+
+  .heatmap-corner,
+  .heatmap-column-label,
+  .heatmap-row-label,
+  .heatmap-cell {
+    border-radius: 0.7rem;
+  }
+
+  .heatmap-corner,
+  .heatmap-column-label {
+    padding: 0.45rem 0.2rem;
+    font-size: 0.55rem;
   }
 }

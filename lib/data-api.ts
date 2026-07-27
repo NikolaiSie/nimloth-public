@@ -1,8 +1,12 @@
+import {
+  getLatestMomentumMatrix,
+  getMomentumMetadata,
+  NimlothApiError,
+  type MomentumMatrixSlice,
+} from "@/lib/nimloth-api";
 import { z } from "zod";
 
-const envSchema = z.object({
-  NIMLOTH_DATA_API_BASE_URL: z.string().url().optional(),
-  NIMLOTH_DATA_API_KEY: z.string().min(1).optional(),
+const deploymentEnvSchema = z.object({
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
   GCP_PROJECT: z.string().optional(),
   K_SERVICE: z.string().optional(),
@@ -19,19 +23,8 @@ export type MarketSnapshot = {
   points: string[];
 };
 
-type NimlothMetadataResponse = {
-  available_aggregations?: string[];
-  available_caps?: string[];
-  available_countries?: string[];
-  available_dates?: string[];
-  latest_date?: string;
-  updated_at?: string;
-};
-
-function readEnv() {
-  return envSchema.parse({
-    NIMLOTH_DATA_API_BASE_URL: process.env.NIMLOTH_DATA_API_BASE_URL,
-    NIMLOTH_DATA_API_KEY: process.env.NIMLOTH_DATA_API_KEY,
+function readDeploymentEnv() {
+  return deploymentEnvSchema.parse({
     GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT,
     GCP_PROJECT: process.env.GCP_PROJECT,
     K_SERVICE: process.env.K_SERVICE,
@@ -39,7 +32,9 @@ function readEnv() {
   });
 }
 
-function detectDeploymentEnvironment(env: ReturnType<typeof readEnv>): DeploymentEnvironment {
+function detectDeploymentEnvironment(
+  env: ReturnType<typeof readDeploymentEnv>,
+): DeploymentEnvironment {
   if (env.NIMLOTH_PUBLIC_ENV) {
     return env.NIMLOTH_PUBLIC_ENV;
   }
@@ -57,89 +52,157 @@ function detectDeploymentEnvironment(env: ReturnType<typeof readEnv>): Deploymen
   return "local";
 }
 
-function resolveApiConfig(env: ReturnType<typeof readEnv>) {
-  const environment = detectDeploymentEnvironment(env);
+function findStrongestAbsoluteValue(values: MomentumMatrixSlice["values"]) {
+  let strongest: number | null = null;
 
-  return {
-    environment,
-    baseUrl: env.NIMLOTH_DATA_API_BASE_URL,
-    apiKey: env.NIMLOTH_DATA_API_KEY,
-  };
-}
+  for (const row of values) {
+    for (const value of row) {
+      if (typeof value !== "number" || Number.isNaN(value)) {
+        continue;
+      }
 
-function requireApiConfig(config: ReturnType<typeof resolveApiConfig>) {
-  if (!config.baseUrl) {
-    throw new Error(
-      `NIMLOTH_DATA_API_BASE_URL is required for ${config.environment} environment.`,
-    );
+      if (strongest === null || Math.abs(value) > Math.abs(strongest)) {
+        strongest = value;
+      }
+    }
   }
 
-  if (!config.apiKey) {
-    throw new Error(
-      `NIMLOTH_DATA_API_KEY is required for ${config.environment} environment.`,
-    );
-  }
+  return strongest;
 }
 
-async function fetchNimlothApiJson<T>(path: string, config: ReturnType<typeof resolveApiConfig>) {
-  requireApiConfig(config);
-
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    method: "GET",
-    headers: {
-      "X-API-Key": config.apiKey!,
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Nimloth API error ${response.status}: ${body}`);
+function firstMatrixValue(values: Array<Array<number | null | undefined>>) {
+  for (const row of values) {
+    for (const value of row) {
+      if (typeof value === "number" && !Number.isNaN(value)) {
+        return value;
+      }
+    }
   }
 
-  return (await response.json()) as T;
+  return null;
 }
 
-async function getApiMetadataSmokeSnapshot() {
-  const env = readEnv();
-  const config = resolveApiConfig(env);
+function formatMetric(value: number | null | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "unavailable";
+  }
+
+  return value.toFixed(4);
+}
+
+function formatCount(value: number | null | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "unavailable";
+  }
+
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
+function buildUnavailableSnapshot(
+  environment: DeploymentEnvironment,
+  error: unknown,
+): MarketSnapshot {
   const now = new Date().toISOString();
 
-  if (!config.baseUrl || !config.apiKey) {
+  if (error instanceof NimlothApiError) {
+    if (error.kind === "auth") {
+      return {
+        status: "degraded",
+        asOf: now,
+        headline: `Momentum API auth failed in ${environment}`,
+        summary:
+          "The website reached the Nimloth API, but the shared-secret configuration was rejected.",
+        points: [
+          `Environment: ${environment}`,
+          `Status: ${error.status}`,
+          "Check NIMLOTH_DATA_API_KEY in the server environment.",
+        ],
+      };
+    }
+
+    if (error.kind === "unavailable") {
+      return {
+        status: "degraded",
+        asOf: now,
+        headline: `Latest momentum slice unavailable in ${environment}`,
+        summary:
+          "The requested latest slice is not available for the default ALL / ALL / mean filters.",
+        points: [
+          `Environment: ${environment}`,
+          `Status: ${error.status}`,
+          "Try a different date or filter combination once the UI controls are added.",
+        ],
+      };
+    }
+
+    if (error.kind === "temporary") {
+      return {
+        status: "degraded",
+        asOf: now,
+        headline: `Momentum API temporarily unavailable in ${environment}`,
+        summary:
+          "The upstream Nimloth API returned a temporary availability error. Retry should succeed once the service stabilizes.",
+        points: [
+          `Environment: ${environment}`,
+          `Status: ${error.status}`,
+          "Retry later.",
+        ],
+      };
+    }
+  }
+
+  if (error instanceof Error) {
     return {
       status: "degraded",
       asOf: now,
-      headline: `Data API health check unavailable in ${config.environment}`,
-      summary: "The server-side API base URL or API key is not configured.",
+      headline: `Momentum API unavailable in ${environment}`,
+      summary:
+        "The website could not load the Nimloth momentum API from server-side code.",
       points: [
-        `Environment: ${config.environment}`,
-        `Base URL configured: ${config.baseUrl ? "yes" : "no"}`,
-        `API key configured: ${config.apiKey ? "yes" : "no"}`,
+        `Environment: ${environment}`,
+        `Error: ${error.message}`,
       ],
-    } satisfies MarketSnapshot;
+    };
   }
 
-  const metadata = await fetchNimlothApiJson<NimlothMetadataResponse>(
-    "/v1/momentum-matrix/metadata",
-    config,
-  );
-
   return {
-    status: "healthy",
-    asOf: metadata.updated_at ?? now,
-    headline: `Data API metadata auth passed in ${config.environment}`,
+    status: "degraded",
+    asOf: now,
+    headline: `Momentum API unavailable in ${environment}`,
     summary:
-      "The website can authenticate server-side and load upstream momentum metadata.",
-    points: [
-      `Environment: ${config.environment}`,
-      `Endpoint: ${config.baseUrl}/v1/momentum-matrix/metadata`,
-      `Latest date: ${metadata.latest_date ?? "unavailable"}`,
-      `Dates available: ${metadata.available_dates?.length ?? 0}`,
-      `Default filters: country=ALL, cap=ALL, aggregation=mean`,
-    ],
-  } satisfies MarketSnapshot;
+      "The website could not load the Nimloth momentum API from server-side code.",
+    points: [`Environment: ${environment}`],
+  };
 }
 
 export async function getMarketSnapshot() {
-  return getApiMetadataSmokeSnapshot();
+  const environment = detectDeploymentEnvironment(readDeploymentEnv());
+
+  try {
+    const metadata = await getMomentumMetadata();
+    const latest = await getLatestMomentumMatrix({
+      country: "ALL",
+      cap: "ALL",
+      aggregation: "mean",
+    });
+
+    const strongestValue = findStrongestAbsoluteValue(latest.values);
+
+    return {
+      status: "healthy",
+      asOf: new Date().toISOString(),
+      headline: `Latest momentum matrix loaded in ${environment}`,
+      summary:
+        "The website authenticated successfully and loaded the latest ALL / ALL / mean momentum slice.",
+      points: [
+        `Date: ${latest.date}`,
+        `Matrix size: ${latest.rows.length} x ${latest.columns.length}`,
+        `Strongest absolute spread: ${formatMetric(strongestValue)}`,
+        `Observations: ${formatCount(firstMatrixValue(latest.n_total ?? []))}`,
+        `Latest metadata date: ${metadata.latest_date ?? "unavailable"}`,
+      ],
+    } satisfies MarketSnapshot;
+  } catch (error) {
+    return buildUnavailableSnapshot(environment, error);
+  }
 }

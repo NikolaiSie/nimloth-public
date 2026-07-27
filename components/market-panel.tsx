@@ -6,9 +6,9 @@ import type { MarketSnapshot } from "@/lib/data-api";
 const fallbackState: MarketSnapshot = {
   status: "loading",
   asOf: "",
-  headline: "Loading data API metadata auth check",
+  headline: "Loading latest momentum snapshot",
   summary:
-    "The public panel is checking upstream metadata from server-side code.",
+    "The public panel is requesting the latest ALL / ALL / mean slice from server-side code.",
   points: [],
 };
 
@@ -33,8 +33,8 @@ export function MarketPanel() {
           setSnapshot({
             status: "degraded",
             asOf: "",
-            headline: "Data API metadata auth failed",
-            summary: "The public route could not load upstream metadata.",
+            headline: "Momentum API request failed",
+            summary: "The public route could not load the latest momentum slice.",
             points: [],
           });
         }

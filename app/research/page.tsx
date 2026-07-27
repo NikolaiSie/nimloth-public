@@ -1,5 +1,11 @@
 import { ArticleCard } from "@/components/article-card";
+import {
+  MomentumOverview,
+  type MomentumOverviewPayload,
+} from "@/components/momentum-overview";
 import { getContentIndex } from "@/lib/content";
+import { getLatestMomentumMatrix, getMomentumMetadata } from "@/lib/nimloth-api";
+import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 export const metadata = {
   title: "Research",
@@ -8,6 +14,32 @@ export const metadata = {
 
 export default async function ResearchIndexPage() {
   const research = await getContentIndex("research");
+  let initialPayload: MomentumOverviewPayload | null = null;
+  let initialError: string | null = null;
+
+  try {
+    const metadata = await getMomentumMetadata();
+    const matrix = await getLatestMomentumMatrix({
+      country: "ALL",
+      cap: "ALL",
+      aggregation: "median",
+    });
+
+    const normalizedMatrix = normalizeMomentumMatrixColumns(matrix, metadata);
+
+    initialPayload = {
+      metadata,
+      matrix: normalizedMatrix,
+      filters: {
+        country: "ALL" as const,
+        cap: "ALL" as const,
+        aggregation: "median" as const,
+        date: null,
+      },
+    };
+  } catch {
+    initialError = "The latest momentum overview is temporarily unavailable.";
+  }
 
   return (
     <div className="container">
@@ -22,6 +54,10 @@ export default async function ResearchIndexPage() {
           scrutiny.
         </p>
       </section>
+      <MomentumOverview
+        initialPayload={initialPayload}
+        initialError={initialError}
+      />
       <section className="section">
         <div className="article-list">
           {research.map((article) => (
