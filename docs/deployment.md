@@ -61,6 +61,16 @@ The workflow also imports known singleton resources into Terraform state before 
 
 By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy. Production can still be configured as public later.
 
+## What the prod workflow now expects
+
+The production workflow mirrors nonprod with a separate backend prefix and project:
+
+1. A bootstrap apply with `deploy_website=false`
+2. A build and push into the prod Artifact Registry repository
+3. A full apply with `deploy_website=true`
+
+Like nonprod, it imports known singleton resources into Terraform state before apply so reruns can recover from partially-created production infrastructure instead of failing on `409 already exists`.
+
 ## Manual local Terraform flow
 
 ```bash
