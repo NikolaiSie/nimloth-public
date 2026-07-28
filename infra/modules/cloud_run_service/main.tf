@@ -4,13 +4,21 @@ data "google_project" "current" {
 }
 
 resource "google_cloud_run_v2_service" "service" {
-  provider     = google-beta
-  name         = var.service_name
-  location     = var.region
-  project      = var.project_id
-  ingress      = "INGRESS_TRAFFIC_ALL"
-  launch_stage = var.iap_enabled ? "BETA" : null
-  iap_enabled  = var.iap_enabled
+  provider             = google-beta
+  name                 = var.service_name
+  location             = var.region
+  project              = var.project_id
+  ingress              = "INGRESS_TRAFFIC_ALL"
+  launch_stage         = var.iap_enabled ? "BETA" : null
+  iap_enabled          = var.iap_enabled
+  invoker_iam_disabled = var.invoker_iam_disabled
+
+  lifecycle {
+    precondition {
+      condition     = !(var.iap_enabled && var.invoker_iam_disabled)
+      error_message = "IAP and a disabled Cloud Run invoker IAM check cannot be enabled together."
+    }
+  }
 
   template {
     service_account = var.service_account_email

@@ -26,6 +26,12 @@ variable "iap_enabled" {
   default     = true
 }
 
+variable "invoker_iam_disabled" {
+  type        = bool
+  description = "Whether to disable the Cloud Run invoker IAM check."
+  default     = false
+}
+
 variable "data_api_audience" {
   type        = string
   description = "Legacy placeholder retained for compatibility with older deploy wiring."

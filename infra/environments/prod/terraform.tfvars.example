@@ -1,5 +1,9 @@
 allow_unauthenticated = false
-iap_enabled          = true
+iap_enabled          = false
+invoker_iam_disabled = true
+firebase_site_id     = "nimloth-public-prod-site"
+primary_domain       = "nimlothcapital.com"
+redirect_domains     = ["www.nimlothcapital.com"]
 container_image    = "us-east4-docker.pkg.dev/nimloth-public-prod/nimloth-public/nimloth-public:main"
 data_api_base_url  = "https://private-data-api.example.internal"
 data_api_audience  = "https://private-data-api.example.internal"

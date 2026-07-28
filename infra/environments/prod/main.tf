@@ -12,6 +12,8 @@ locals {
   project_services = [
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
+    "firebase.googleapis.com",
+    "firebasehosting.googleapis.com",
     "iap.googleapis.com",
     "run.googleapis.com",
   ]
@@ -52,6 +54,7 @@ module "website" {
   }
   allow_unauthenticated = var.allow_unauthenticated
   iap_enabled           = var.iap_enabled
+  invoker_iam_disabled  = var.invoker_iam_disabled
   project_id            = var.project_id
   region                = var.region
   service_name          = "nimloth-public-web"
@@ -65,6 +68,23 @@ module "website" {
   depends_on = [module.project_services]
 }
 
+module "firebase_hosting" {
+  count  = var.deploy_website ? 1 : 0
+  source = "../../modules/firebase_hosting"
+  providers = {
+    google-beta = google-beta
+  }
+
+  cloud_run_region       = var.region
+  cloud_run_service_name = module.website[0].service_name
+  primary_domain         = var.primary_domain
+  project_id             = var.project_id
+  redirect_domains       = var.redirect_domains
+  site_id                = var.firebase_site_id
+
+  depends_on = [module.project_services]
+}
+
 output "artifact_registry_repository" {
   value = module.artifact_registry.repository_name
 }
@@ -75,4 +95,17 @@ output "public_runtime_service_account_email" {
 
 output "service_url" {
   value = var.deploy_website ? module.website[0].service_url : null
+}
+
+output "firebase_hosting_url" {
+  value = var.deploy_website ? module.firebase_hosting[0].hosting_url : null
+}
+
+output "firebase_domain_status" {
+  value = var.deploy_website ? module.firebase_hosting[0].domain_status : {}
+}
+
+output "firebase_required_dns_updates" {
+  description = "Add these records at the current authoritative DNS provider without replacing existing mail records."
+  value       = var.deploy_website ? module.firebase_hosting[0].required_dns_updates : {}
 }

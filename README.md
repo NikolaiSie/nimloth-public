@@ -16,7 +16,7 @@
 
 - `Next.js` with the App Router and TypeScript
 - Repo-managed Markdown content for blog and research publishing
-- `Cloud Run` as the initial hosting target
+- `Cloud Run` as the application runtime with `Firebase Hosting` as the production edge
 - `Terraform` for all application infrastructure
 - `GitHub Actions` for CI and environment deployments
 
