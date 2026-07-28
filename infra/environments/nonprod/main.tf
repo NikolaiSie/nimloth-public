@@ -48,7 +48,7 @@ module "website" {
   count  = var.deploy_website ? 1 : 0
   source = "../../modules/cloud_run_service"
   providers = {
-    google = google-beta
+    google-beta = google-beta
   }
   allow_unauthenticated = var.allow_unauthenticated
   iap_enabled           = var.iap_enabled

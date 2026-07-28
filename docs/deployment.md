@@ -60,7 +60,7 @@ That removes the first-deploy circular dependency between Artifact Registry and 
 The workflow also imports known singleton resources into Terraform state before apply so reruns can recover from partially-created non-production infrastructure instead of repeatedly failing with `409 already exists`.
 
 By default, non-production does not grant `allUsers` invoke access. This avoids deployment failure in GCP organizations that block public IAM members through org policy.
-Non-production now also enables direct Cloud Run IAP in Terraform, so browser access is preserved across deploys instead of relying on manual console state.
+Non-production now also enables direct Cloud Run IAP in Terraform, so browser access is preserved across deploys instead of relying on manual console state. Terraform also grants the project IAP service agent permission to invoke the service.
 
 ## What the production workflow now expects
 

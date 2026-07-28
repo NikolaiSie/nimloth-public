@@ -6,7 +6,6 @@ out/
 terraform.tfstate
 terraform.tfstate.*
 .terraform/
-.terraform.lock.hcl
 *.log
 *.tsbuildinfo
 .env

@@ -1,9 +1,16 @@
+data "google_project" "current" {
+  provider   = google-beta
+  project_id = var.project_id
+}
+
 resource "google_cloud_run_v2_service" "service" {
-  name        = var.service_name
-  location    = var.region
-  project     = var.project_id
-  ingress     = "INGRESS_TRAFFIC_ALL"
-  iap_enabled = var.iap_enabled
+  provider     = google-beta
+  name         = var.service_name
+  location     = var.region
+  project      = var.project_id
+  ingress      = "INGRESS_TRAFFIC_ALL"
+  launch_stage = var.iap_enabled ? "BETA" : null
+  iap_enabled  = var.iap_enabled
 
   template {
     service_account = var.service_account_email
@@ -39,12 +46,23 @@ resource "google_cloud_run_v2_service" "service" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
+  provider = google-beta
   count    = var.allow_unauthenticated ? 1 : 0
   name     = google_cloud_run_v2_service.service.name
   location = google_cloud_run_v2_service.service.location
   project  = var.project_id
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "iap_invoker" {
+  provider = google-beta
+  count    = var.iap_enabled ? 1 : 0
+  name     = google_cloud_run_v2_service.service.name
+  location = google_cloud_run_v2_service.service.location
+  project  = var.project_id
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-iap.iam.gserviceaccount.com"
 }
 
 output "service_name" {
