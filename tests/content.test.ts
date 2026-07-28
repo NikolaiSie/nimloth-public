@@ -4,6 +4,7 @@ describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
     expect(posts.map((post) => post.slug)).toEqual([
+      "why-i-am-building-nimloth",
       "launch-notes",
       "why-cloud-run",
     ]);

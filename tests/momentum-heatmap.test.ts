@@ -65,19 +65,20 @@ describe("momentum heatmap helpers", () => {
   });
 
   it("formats cells and missing values for display", () => {
-    expect(formatHeatmapValue(0.123456)).toBe("0.1235");
+    expect(formatHeatmapValue(0.123456)).toBe("12.35%");
+    expect(formatHeatmapValue(-0.0075)).toBe("-0.75%");
     expect(formatHeatmapValue(null)).toBe("N/A");
   });
 
   it("returns distinct styles for positive, negative, and missing values", () => {
     expect(getHeatmapCellStyle(0.15, 0.2).backgroundColor).toContain(
-      "rgba(15, 91, 83",
+      "rgba(31, 104, 119",
     );
     expect(getHeatmapCellStyle(-0.2, 0.2).backgroundColor).toContain(
-      "rgba(197, 138, 51",
+      "rgba(177, 119, 66",
     );
     expect(getHeatmapCellStyle(null, 0.2).backgroundColor).toBe(
-      "rgba(22, 34, 31, 0.08)",
+      "rgba(12, 35, 52, 0.07)",
     );
   });
 });

@@ -44,15 +44,14 @@ export default async function ResearchIndexPage() {
   return (
     <div className="container">
       <section className="page-hero">
-        <p className="eyebrow" style={{ color: "var(--accent)" }}>
-          Research
-        </p>
-        <h1>Long-form work, not just updates.</h1>
-        <p>
-          Research pieces are where assumptions are forced into the open. This
-          is where infrastructure and quantitative ideas are meant to withstand
-          scrutiny.
-        </p>
+        <p className="eyebrow">Research / Evidence</p>
+        <div className="page-hero__grid">
+          <h1>Work that can withstand scrutiny.</h1>
+          <p>
+            Market research, methods, and architecture with assumptions made
+            explicit and conclusions kept proportional to the evidence.
+          </p>
+        </div>
       </section>
       <MomentumOverview
         initialPayload={initialPayload}

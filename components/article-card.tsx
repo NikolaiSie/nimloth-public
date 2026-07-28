@@ -22,6 +22,7 @@ export function ArticleCard({ article, basePath }: ArticleCardProps) {
           </span>
         ))}
       </div>
+      <span className="article-list__cta">Read entry</span>
     </Link>
   );
 }

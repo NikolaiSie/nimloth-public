@@ -43,7 +43,7 @@ export function getMaxAbsoluteValue(values: MomentumMatrixSlice["values"]) {
 export function getHeatmapCellStyle(value: number | null, maxAbsoluteValue: number) {
   if (value === null || Number.isNaN(value)) {
     return {
-      backgroundColor: "rgba(22, 34, 31, 0.08)",
+      backgroundColor: "rgba(12, 35, 52, 0.07)",
       color: "var(--muted)",
     };
   }
@@ -53,14 +53,14 @@ export function getHeatmapCellStyle(value: number | null, maxAbsoluteValue: numb
 
   if (value >= 0) {
     return {
-      backgroundColor: `rgba(15, 91, 83, ${0.16 + intensity * 0.52})`,
-      color: intensity > 0.5 ? "var(--surface-strong)" : "var(--accent-strong)",
+      backgroundColor: `rgba(31, 104, 119, ${0.14 + intensity * 0.66})`,
+      color: intensity > 0.46 ? "#f5f0e6" : "var(--navy)",
     };
   }
 
   return {
-    backgroundColor: `rgba(197, 138, 51, ${0.16 + intensity * 0.52})`,
-    color: intensity > 0.55 ? "#2c1908" : "var(--accent-strong)",
+    backgroundColor: `rgba(177, 119, 66, ${0.14 + intensity * 0.64})`,
+    color: intensity > 0.5 ? "#fff7e7" : "var(--navy)",
   };
 }
 
@@ -69,5 +69,5 @@ export function formatHeatmapValue(value: number | null) {
     return "N/A";
   }
 
-  return value.toFixed(4);
+  return `${(value * 100).toFixed(2)}%`;
 }
