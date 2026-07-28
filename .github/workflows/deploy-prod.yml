@@ -47,10 +47,24 @@ jobs:
 
       - name: Initialize Terraform backend
         working-directory: infra/environments/prod
+        shell: bash
         run: |
-          terraform init -input=false \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="prefix=nimloth-public/prod"
+          set -euo pipefail
+
+          for attempt in 1 2 3; do
+            if terraform init -input=false \
+              -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+              -backend-config="prefix=nimloth-public/prod"; then
+              break
+            fi
+
+            if [[ "$attempt" -eq 3 ]]; then
+              exit 1
+            fi
+
+            echo "Terraform init failed; retrying provider download in $((attempt * 10)) seconds."
+            sleep "$((attempt * 10))"
+          done
 
       - name: Adopt existing bootstrap resources into Terraform state
         working-directory: infra/environments/prod

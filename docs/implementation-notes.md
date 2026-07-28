@@ -11,6 +11,7 @@
 - The current data API contract is server-side `X-API-Key` authentication rather than browser access or workload identity
 - Cloud Run IAP is managed in Terraform so deploys do not silently remove authenticated browser access after manual console changes; the module uses the Google beta provider because direct Cloud Run IAP is currently a beta Terraform field
 - Terraform provider lock files are committed per environment root so local validation and CI use the same provider versions
+- Each environment root declares a GCS backend; CI supplies only the environment-specific bucket and prefix so state persists between ephemeral runners
 
 ## Pending refinements
 
