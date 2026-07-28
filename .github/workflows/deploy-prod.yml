@@ -108,6 +108,9 @@ jobs:
         working-directory: infra/environments/prod
         run: |
           terraform apply -input=false -auto-approve \
+            -target=module.project_services \
+            -target=module.artifact_registry \
+            -target=module.runtime_service_account \
             -var="deploy_website=false" \
             -var="container_image=" \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
