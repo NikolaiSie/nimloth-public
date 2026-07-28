@@ -108,6 +108,9 @@ jobs:
         working-directory: infra/environments/prod
         run: |
           terraform apply -input=false -auto-approve \
+            -target=module.project_services \
+            -target=module.artifact_registry \
+            -target=module.runtime_service_account \
             -var="deploy_website=false" \
             -var="container_image=" \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
@@ -160,6 +163,10 @@ jobs:
             -var="data_api_key=${{ secrets.NIMLOTH_DATA_API_KEY }}" \
             -var="data_api_audience="
 
-      - name: Show deployed URL
+      - name: Show deployed endpoints and DNS requirements
         working-directory: infra/environments/prod
-        run: terraform output service_url
+        run: |
+          terraform output service_url
+          terraform output firebase_hosting_url
+          terraform output firebase_domain_status
+          terraform output -json firebase_required_dns_updates

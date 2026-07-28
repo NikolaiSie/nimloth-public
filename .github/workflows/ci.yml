@@ -39,3 +39,45 @@ jobs:
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive infra
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - nonprod
+          - prod
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialize providers
+        run: terraform -chdir=infra/environments/${{ matrix.environment }} init -backend=false -input=false
+
+      - name: Validate configuration
+        run: terraform -chdir=infra/environments/${{ matrix.environment }} validate
+
+  terraform-module-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - cloud_run_service
+          - firebase_hosting
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialize providers
+        run: terraform -chdir=infra/modules/${{ matrix.module }} init -backend=false -input=false
+
+      - name: Run module tests
+        run: terraform -chdir=infra/modules/${{ matrix.module }} test

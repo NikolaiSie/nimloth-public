@@ -4,9 +4,7 @@ export default function NotFoundPage() {
   return (
     <div className="container">
       <section className="page-hero">
-        <p className="eyebrow" style={{ color: "var(--accent)" }}>
-          404
-        </p>
+        <p className="eyebrow">404 / Uncharted</p>
         <h1>That page is not here.</h1>
         <p>
           The route may have moved or the article may not be published yet.

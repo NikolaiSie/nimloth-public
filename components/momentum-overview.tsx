@@ -165,9 +165,7 @@ export function MomentumOverview({
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>
-            <p className="eyebrow" style={{ color: "var(--accent)" }}>
-              Momentum Overview
-            </p>
+            <p className="eyebrow">Momentum overview / Live research</p>
             <h2>Global stock momentum snapshot</h2>
             <p className="research-overview__intro">
               Stock momentum tracks whether assets with stronger recent returns

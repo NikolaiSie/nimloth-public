@@ -52,6 +52,7 @@ module "website" {
   }
   allow_unauthenticated = var.allow_unauthenticated
   iap_enabled           = var.iap_enabled
+  invoker_iam_disabled  = var.invoker_iam_disabled
   project_id            = var.project_id
   region                = var.region
   service_name          = "nimloth-public-web"

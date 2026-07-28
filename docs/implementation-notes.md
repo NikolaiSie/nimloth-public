@@ -12,9 +12,11 @@
 - Cloud Run IAP is managed in Terraform so deploys do not silently remove authenticated browser access after manual console changes; the module uses the Google beta provider because direct Cloud Run IAP is currently a beta Terraform field
 - Terraform provider lock files are committed per environment root so local validation and CI use the same provider versions
 - Each environment root declares a GCS backend; CI supplies only the environment-specific bucket and prefix so state persists between ephemeral runners
+- Firebase Hosting is the production custom-domain edge because it avoids the fixed cost of a global load balancer and the production limitations of direct Cloud Run domain mapping
+- Existing authoritative DNS is not migrated automatically because the domain carries Google Workspace mail; Firebase-required records are exposed as Terraform outputs instead
 
 ## Pending refinements
 
-- Add a production custom domain front end once the DNS and certificate path is finalized
+- Inventory the existing domain records before considering a future Cloud DNS migration
 - Decide whether preview environments are worth the added complexity
 - Add observability resources such as uptime checks and alerting policies

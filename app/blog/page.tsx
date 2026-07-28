@@ -12,14 +12,14 @@ export default async function BlogIndexPage() {
   return (
     <div className="container">
       <section className="page-hero">
-        <p className="eyebrow" style={{ color: "var(--accent)" }}>
-          Blog
-        </p>
-        <h1>Short notes from the build.</h1>
-        <p>
-          This section is for implementation updates, infrastructure choices,
-          and shorter lessons that do not need a full research treatment.
-        </p>
+        <p className="eyebrow">Journal / Field notes</p>
+        <div className="page-hero__grid">
+          <h1>Notes from the workbench.</h1>
+          <p>
+            Implementation updates, infrastructure decisions, and shorter
+            lessons from building a quantitative research platform.
+          </p>
+        </div>
       </section>
       <section className="section">
         <div className="article-list">

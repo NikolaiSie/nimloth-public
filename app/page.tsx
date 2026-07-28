@@ -14,42 +14,71 @@ export default async function HomePage() {
     <>
       <section className="hero">
         <div className="container hero__grid">
-          <div className="hero-card card">
-            <p className="eyebrow">Nimloth Capital</p>
-            <h1>Publishing the research stack behind a two-year experiment.</h1>
+          <div className="hero-card">
+            <p className="eyebrow">Independent quantitative research / 2026</p>
+            <h1>
+              Markets observed.
+              <span>Systems explained.</span>
+            </h1>
             <p>
-              Nimloth Capital is the public face of a deeper data and ML
-              platform. The goal is straightforward: build the infrastructure,
-              run quantitative research, and publish what survives first
-              principles scrutiny.
+              Nimloth Capital is a two-year research program in market data,
+              machine learning, and quantitative trading. This is the public
+              record of the work: methods, results, and the systems beneath
+              them.
             </p>
             <div className="hero-actions">
               <Link className="button-link" href="/research">
-                Read research
+                Explore research
               </Link>
               <Link className="button-link--secondary" href="/blog">
-                Browse the blog
+                Read the journal
               </Link>
             </div>
-            <ul className="pill-list">
-              <li>Quantitative trading notes</li>
-              <li>Research operations</li>
-              <li>Cloud-native engineering</li>
-            </ul>
           </div>
           <div className="hero-side">
+            <div className="hero-side__label">
+              <span>Current observation</span>
+              <span>Server-side data</span>
+            </div>
             <MarketPanel />
-            <div className="metric-card card">
-              <h2>Operating principles</h2>
-              <div className="stat-row">
-                <span className="tag">Readable by design</span>
-                <span className="tag">Infrastructure as code</span>
-                <span className="tag">Security first</span>
-              </div>
+          </div>
+        </div>
+        <div className="container hero__footer">
+          <span>01 / Research</span>
+          <span>02 / Engineering</span>
+          <span>03 / Publication</span>
+        </div>
+      </section>
+
+      <section className="section section--mandate">
+        <div className="container mandate">
+          <div className="mandate__heading">
+            <p className="eyebrow">The mandate</p>
+            <h2>Build the evidence. Test the thesis. Publish the record.</h2>
+          </div>
+          <div className="mandate__grid">
+            <div className="mandate__item">
+              <span>01</span>
+              <h3>Data foundations</h3>
               <p>
-                The public website stays intentionally narrow. It showcases the
-                ideas, exposes selected outputs, and keeps all sensitive
-                analytics behind a server-side boundary.
+                Reproducible pipelines and explicit data contracts before any
+                model earns attention.
+              </p>
+            </div>
+            <div className="mandate__item">
+              <span>02</span>
+              <h3>Empirical discipline</h3>
+              <p>
+                Results are judged against assumptions, failure modes, and what
+                would falsify them.
+              </p>
+            </div>
+            <div className="mandate__item">
+              <span>03</span>
+              <h3>Public record</h3>
+              <p>
+                Useful methods and conclusions are published without exposing
+                private data or execution logic.
               </p>
             </div>
           </div>
@@ -59,49 +88,9 @@ export default async function HomePage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            title="What this site is for"
-            description="A compact front end for public-facing writing, architecture notes, and selected market observations."
-            link={{ href: "/research", label: "See the research archive" }}
-          />
-          <div className="article-list">
-            <div className="banner">
-              <h2>Welcome page</h2>
-              <p>
-                A clear introduction to the project, the operating constraints,
-                and why the public repository exists.
-              </p>
-            </div>
-            <div className="banner">
-              <h2>Blog</h2>
-              <p>
-                Shorter updates about infrastructure, experiments, and lessons
-                learned while building the stack.
-              </p>
-            </div>
-            <div className="banner">
-              <h2>Research</h2>
-              <p>
-                Longer form writing where system design, data quality, and
-                trading questions can be laid out without compression.
-              </p>
-            </div>
-            <div className="banner">
-              <h2>Secure integration</h2>
-              <p>
-                Public visitors see a narrow read-only surface. Calls into the
-                private data platform stay server-side.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <SectionHeading
-            title="From the blog"
-            description="Shorter entries intended to keep the public trail current while the deeper platform evolves."
-            link={{ href: "/blog", label: "Open the blog" }}
+            title="Field notes"
+            description="Short entries from the research and engineering process."
+            link={{ href: "/blog", label: "View journal" }}
           />
           <div className="article-list">
             {featuredPosts.map((post) => (
@@ -114,9 +103,9 @@ export default async function HomePage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            title="Research tracks"
-            description="Longer pieces that connect infrastructure, methodology, and trading questions."
-            link={{ href: "/research", label: "Open research" }}
+            title="Research ledger"
+            description="Long-form work connecting market questions, methodology, and infrastructure."
+            link={{ href: "/research", label: "View research" }}
           />
           <div className="article-list">
             {featuredResearch.map((article) => (

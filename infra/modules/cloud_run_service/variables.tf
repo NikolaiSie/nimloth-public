@@ -22,6 +22,12 @@ variable "iap_enabled" {
   default     = false
 }
 
+variable "invoker_iam_disabled" {
+  type        = bool
+  description = "Whether to disable the Cloud Run invoker IAM check for public access without an allUsers binding."
+  default     = false
+}
+
 variable "image" {
   type        = string
   description = "Full container image reference."

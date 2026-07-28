@@ -16,16 +16,28 @@ Non-production does not require a separate copy of the data platform. The intend
 3. Push that image to Artifact Registry in the target project
 4. Apply the Terraform root for the target environment with the new image reference
 5. Let the Cloud Run service pick up the new image
+6. In production, release a Firebase Hosting configuration that rewrites requests to Cloud Run
 
-## Bootstrap steps still required
+## Bootstrap requirements
 
-Before full GitHub-based deployments can be turned on, the following need to exist:
+GitHub-based deployments require:
 
-1. A remote Terraform state bucket for each environment, or a consciously shared backend with clear locking and access control
-2. A GitHub to GCP authentication path, ideally Workload Identity Federation
-3. Repository or environment variables describing project ids, region, workload identity provider, and deployer service account
-4. Billing enabled on the GCP project
-5. A decision on whether custom domain resources will be managed in this repository or in shared infrastructure
+1. The existing remote Terraform state bucket for each environment
+2. The existing GitHub Workload Identity Federation provider
+3. GitHub environment variables and secrets for each project
+4. Billing enabled on both GCP projects
+5. `roles/firebase.admin` on the production GitHub deployer service account
+
+Grant the production deployer its additional Firebase permission once:
+
+```bash
+gcloud projects add-iam-policy-binding nimloth-public-prod \
+  --member="serviceAccount:<production-deployer-service-account>" \
+  --role="roles/firebase.admin"
+```
+
+The existing service usage permission remains responsible for enabling
+`firebase.googleapis.com` and `firebasehosting.googleapis.com`.
 
 ## Suggested GitHub environment variables
 
@@ -53,7 +65,7 @@ Before full GitHub-based deployments can be turned on, the following need to exi
 
 The nonprod workflow is designed to run on every push to `dev` and uses two Terraform applies:
 
-1. A bootstrap apply with `deploy_website=false` so Artifact Registry and the runtime service account exist before the image build
+1. A targeted bootstrap apply with `deploy_website=false` so APIs, Artifact Registry, and the runtime service account exist before the image build without removing the existing website from persistent state
 2. A full apply with `deploy_website=true` and the pushed image URI
 
 That removes the first-deploy circular dependency between Artifact Registry and the Cloud Run service image reference.
@@ -66,13 +78,33 @@ Non-production now also enables direct Cloud Run IAP in Terraform, so browser ac
 
 The production workflow mirrors nonprod with a separate backend prefix and project:
 
-1. A bootstrap apply with `deploy_website=false`
+1. A targeted bootstrap apply with `deploy_website=false`
 2. A build and push into the prod Artifact Registry repository
 3. A full apply with `deploy_website=true`
+4. A Firebase Hosting release that routes both production domains to Cloud Run
 
 Like nonprod, it imports known singleton resources into Terraform state before apply so reruns can recover from partially-created production infrastructure instead of failing on `409 already exists`.
-Production also defaults to authenticated-only Cloud Run access so deployment succeeds in GCP organizations that block public IAM members. If you later want a public production site, you will need to either relax that org policy or front the service with an approved public access pattern.
-Production also enables direct Cloud Run IAP in Terraform. Keep user or group membership for `roles/iap.httpsResourceAccessor` out of the public repository unless you intentionally parameterize it.
+Production disables direct Cloud Run IAP and disables the Cloud Run invoker IAM check. This provides public access without an `allUsers` IAM binding, which the organization policy rejects. Firebase Hosting supplies the custom-domain edge, managed certificate, and `www` redirect.
+
+## First custom-domain rollout
+
+The first successful `main` deployment creates Firebase associations for
+`nimlothcapital.com` and `www.nimlothcapital.com` without waiting for DNS.
+The workflow's final step prints `firebase_required_dns_updates`.
+
+1. Open the production deployment log and copy only the records under each
+   `desired` DNS block.
+2. Add those records at the domain's current authoritative DNS provider.
+3. Remove only website records that directly conflict with Firebase's requested
+   A, AAAA, or CNAME records.
+4. Preserve all Google Workspace MX, SPF, DKIM, DMARC, and unrelated TXT
+   records.
+5. Do not change the domain's nameservers.
+6. Allow up to 24 hours for DNS verification and managed certificate issuance.
+
+The next Terraform apply refreshes `firebase_domain_status`. Both domains are
+ready when ownership and host state are active. `www.nimlothcapital.com`
+returns a permanent redirect to `nimlothcapital.com`.
 
 ## Manual local Terraform flow
 
@@ -85,9 +117,11 @@ terraform apply -var-file=terraform.tfvars
 
 Use the corresponding `prod` directory only after non-production is validated.
 
-## Why the workflows are still conservative
+## Infrastructure validation
 
-The repository includes CI and environment-specific workflow entry points, but it does not pretend the deployment problem is solved until backend state and GitHub-to-GCP auth are wired correctly. That is deliberate: a readable repository should not hide bootstrap assumptions in half-working automation.
+CI formats and validates both environment roots. Native Terraform tests also
+verify Cloud Run access-mode invariants and the Firebase-to-Cloud-Run routing
+configuration with mocked providers, so tests never create cloud resources.
 
 ## Access rule for nonprod to prod data
 

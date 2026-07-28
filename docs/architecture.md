@@ -13,7 +13,8 @@ The application is a `Next.js` server-rendered site deployed as a container. Pub
 
 ```text
 Browser
-  -> Public Next.js application
+  -> Firebase Hosting (production custom domain and managed TLS)
+    -> Public Next.js application on Cloud Run
     -> Internal server route /api/market-snapshot
       -> Private data API
 ```
@@ -34,6 +35,7 @@ The Terraform code is split into reusable modules and environment-specific roots
 - `infra/modules/artifact_registry`: creates a Docker repository
 - `infra/modules/service_account`: creates the runtime identity and grants roles
 - `infra/modules/cloud_run_service`: deploys the public application
+- `infra/modules/firebase_hosting`: routes the production domains to Cloud Run
 - `infra/environments/nonprod`: root for `nimloth-public-nonprod`
 - `infra/environments/prod`: root for `nimloth-public-prod`
 
