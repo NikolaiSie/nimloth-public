@@ -62,6 +62,7 @@ module "website" {
   image                 = var.container_image
   env_vars = {
     DATA_API_MODE             = var.data_api_key != "" ? "live" : "mock"
+    NIMLOTH_CANONICAL_ORIGIN  = "https://${var.primary_domain}"
     NIMLOTH_DATA_API_BASE_URL = var.data_api_base_url
     NIMLOTH_DATA_API_KEY      = var.data_api_key
   }

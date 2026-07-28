@@ -14,6 +14,7 @@
 - Each environment root declares a GCS backend; CI supplies only the environment-specific bucket and prefix so state persists between ephemeral runners
 - Firebase Hosting is the production custom-domain edge because it avoids the fixed cost of a global load balancer and the production limitations of direct Cloud Run domain mapping
 - Existing authoritative DNS is not migrated automatically because the domain carries Google Workspace mail; Firebase-required records are exposed as Terraform outputs instead
+- Production sets a canonical origin at runtime so generated Firebase and Cloud Run hosts permanently redirect to the public domain while local and non-production requests remain unchanged
 
 ## Pending refinements
 

@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description:
     "Public research, engineering notes, and market experiments from Nimloth Capital.",
   metadataBase: new URL("https://nimlothcapital.com"),
+  alternates: {
+    canonical: "./",
+  },
 };
 
 type RootLayoutProps = Readonly<{
