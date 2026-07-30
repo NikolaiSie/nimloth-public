@@ -8,7 +8,7 @@ resource "google_cloud_run_v2_service" "service" {
   name                 = var.service_name
   location             = var.region
   project              = var.project_id
-  ingress              = "INGRESS_TRAFFIC_ALL"
+  ingress              = var.ingress
   launch_stage         = var.iap_enabled ? "BETA" : null
   iap_enabled          = var.iap_enabled
   invoker_iam_disabled = var.invoker_iam_disabled

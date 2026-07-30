@@ -16,12 +16,20 @@ describe("data api integration", () => {
   it("returns a degraded snapshot when credentials are missing", async () => {
     delete process.env.NIMLOTH_DATA_API_BASE_URL;
     delete process.env.NIMLOTH_DATA_API_KEY;
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { getMarketSnapshot } = await import("@/lib/data-api");
 
     await expect(getMarketSnapshot()).resolves.toMatchObject({
       status: "degraded",
-      headline: "Momentum API unavailable in local",
+      headline: "Momentum data temporarily unavailable",
     });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Market snapshot internal failure",
+      expect.objectContaining({
+        environment: "local",
+        message: "NIMLOTH_DATA_API_BASE_URL is required.",
+      }),
+    );
   });
 
   it("loads metadata and the latest matrix in local mode", async () => {
@@ -157,6 +165,7 @@ describe("data api integration", () => {
   it("surfaces auth failure clearly", async () => {
     process.env.NIMLOTH_DATA_API_BASE_URL = "https://data.example.internal";
     process.env.NIMLOTH_DATA_API_KEY = "top-secret";
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     vi.stubGlobal(
       "fetch",
@@ -171,13 +180,23 @@ describe("data api integration", () => {
 
     await expect(getMarketSnapshot()).resolves.toMatchObject({
       status: "degraded",
-      headline: "Momentum API auth failed in local",
+      headline: "Momentum data temporarily unavailable",
+      points: [],
     });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Market snapshot upstream failure",
+      expect.objectContaining({
+        environment: "local",
+        status: 401,
+        kind: "auth",
+      }),
+    );
   });
 
   it("includes latest-slice unavailable messaging for 404 responses", async () => {
     process.env.NIMLOTH_DATA_API_BASE_URL = "https://data.example.internal";
     process.env.NIMLOTH_DATA_API_KEY = "top-secret";
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     vi.stubGlobal(
       "fetch",
@@ -206,7 +225,16 @@ describe("data api integration", () => {
 
     await expect(getMarketSnapshot()).resolves.toMatchObject({
       status: "degraded",
-      headline: "Latest momentum slice unavailable in local",
+      headline: "Momentum data temporarily unavailable",
+      points: [],
     });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Market snapshot upstream failure",
+      expect.objectContaining({
+        environment: "local",
+        status: 404,
+        kind: "unavailable",
+      }),
+    );
   });
 });

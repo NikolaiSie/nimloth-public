@@ -22,6 +22,12 @@ variable "iap_enabled" {
   default     = false
 }
 
+variable "ingress" {
+  type        = string
+  description = "Ingress setting for the Cloud Run service."
+  default     = "INGRESS_TRAFFIC_ALL"
+}
+
 variable "invoker_iam_disabled" {
   type        = bool
   description = "Whether to disable the Cloud Run invoker IAM check for public access without an allUsers binding."

@@ -116,7 +116,7 @@ export async function getContentBySlug(type: ContentType, slug: string) {
 
   const indexEntry = parseIndexEntry(slug, rawFile);
   const { content } = matter(rawFile);
-  const rendered = await remark().use(html).process(content);
+  const rendered = await remark().use(html, { sanitize: true }).process(content);
 
   return {
     ...indexEntry,
