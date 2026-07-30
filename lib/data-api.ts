@@ -98,81 +98,45 @@ function formatCount(value: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-function buildUnavailableSnapshot(
-  environment: DeploymentEnvironment,
-  error: unknown,
-): MarketSnapshot {
+function buildUnavailableSnapshot(): MarketSnapshot {
   const now = new Date().toISOString();
-
-  if (error instanceof NimlothApiError) {
-    if (error.kind === "auth") {
-      return {
-        status: "degraded",
-        asOf: now,
-        headline: `Momentum API auth failed in ${environment}`,
-        summary:
-          "The website reached the Nimloth API, but the shared-secret configuration was rejected.",
-        points: [
-          `Environment: ${environment}`,
-          `Status: ${error.status}`,
-          "Check NIMLOTH_DATA_API_KEY in the server environment.",
-        ],
-      };
-    }
-
-    if (error.kind === "unavailable") {
-      return {
-        status: "degraded",
-        asOf: now,
-        headline: `Latest momentum slice unavailable in ${environment}`,
-        summary:
-          "The requested latest slice is not available for the default ALL / ALL / mean filters.",
-        points: [
-          `Environment: ${environment}`,
-          `Status: ${error.status}`,
-          "Try a different date or filter combination once the UI controls are added.",
-        ],
-      };
-    }
-
-    if (error.kind === "temporary") {
-      return {
-        status: "degraded",
-        asOf: now,
-        headline: `Momentum API temporarily unavailable in ${environment}`,
-        summary:
-          "The upstream Nimloth API returned a temporary availability error. Retry should succeed once the service stabilizes.",
-        points: [
-          `Environment: ${environment}`,
-          `Status: ${error.status}`,
-          "Retry later.",
-        ],
-      };
-    }
-  }
-
-  if (error instanceof Error) {
-    return {
-      status: "degraded",
-      asOf: now,
-      headline: `Momentum API unavailable in ${environment}`,
-      summary:
-        "The website could not load the Nimloth momentum API from server-side code.",
-      points: [
-        `Environment: ${environment}`,
-        `Error: ${error.message}`,
-      ],
-    };
-  }
-
   return {
     status: "degraded",
     asOf: now,
-    headline: `Momentum API unavailable in ${environment}`,
+    headline: "Momentum data temporarily unavailable",
     summary:
-      "The website could not load the Nimloth momentum API from server-side code.",
-    points: [`Environment: ${environment}`],
+      "The website could not load the latest momentum snapshot from server-side data sources.",
+    points: [],
   };
+}
+
+function logMarketSnapshotFailure(
+  environment: DeploymentEnvironment,
+  error: unknown,
+) {
+  if (error instanceof NimlothApiError) {
+    console.error("Market snapshot upstream failure", {
+      environment,
+      status: error.status,
+      kind: error.kind,
+      body: error.body,
+    });
+    return;
+  }
+
+  if (error instanceof Error) {
+    console.error("Market snapshot internal failure", {
+      environment,
+      message: error.message,
+      stack: error.stack,
+    });
+    return;
+  }
+
+  console.error("Market snapshot unknown failure", {
+    environment,
+    error,
+  });
 }
 
 export async function getMarketSnapshot() {
@@ -203,6 +167,7 @@ export async function getMarketSnapshot() {
       ],
     } satisfies MarketSnapshot;
   } catch (error) {
-    return buildUnavailableSnapshot(environment, error);
+    logMarketSnapshotFailure(environment, error);
+    return buildUnavailableSnapshot();
   }
 }
