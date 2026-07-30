@@ -53,7 +53,6 @@ module "website" {
     google-beta = google-beta
   }
   allow_unauthenticated = var.allow_unauthenticated
-  ingress               = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
   iap_enabled           = var.iap_enabled
   invoker_iam_disabled  = var.invoker_iam_disabled
   project_id            = var.project_id
