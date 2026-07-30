@@ -1,5 +1,6 @@
 describe("next config security headers", () => {
   it("defines a baseline CSP and related browser hardening headers", async () => {
+    // @ts-expect-error Next config is a JavaScript ESM file without a TypeScript declaration.
     const { default: nextConfig } = await import("../next.config.mjs");
     const headerRules = await nextConfig.headers();
 
