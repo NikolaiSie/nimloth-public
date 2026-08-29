@@ -103,10 +103,6 @@ export async function getFeaturedPosts(type: ContentType, count: number) {
   return entries.filter((entry) => entry.featured).slice(0, count);
 }
 
-export async function getFeaturedResearch(type: ContentType, count: number) {
-  return getFeaturedPosts(type, count);
-}
-
 export async function getContentBySlug(type: ContentType, slug: string) {
   const rawFile = await readRawContent(type, slug);
 

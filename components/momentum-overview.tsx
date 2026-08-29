@@ -161,7 +161,7 @@ export function MomentumOverview({
   }
 
   return (
-    <section className="section">
+    <section className="section" id="momentum">
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>

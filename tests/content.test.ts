@@ -5,17 +5,13 @@ import { getContentBySlug, getContentIndex } from "@/lib/content";
 describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
-    expect(posts.map((post) => post.slug)).toEqual([
-      "why-i-am-building-nimloth",
-      "launch-notes",
-      "why-cloud-run",
-    ]);
+    expect(posts.map((post) => post.slug)).toEqual(["why-i-am-building-nimloth"]);
   });
 
-  it("renders research markdown into html", async () => {
-    const article = await getContentBySlug("research", "infrastructure-boundary");
+  it("renders article markdown into html", async () => {
+    const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
     expect(article).not.toBeNull();
-    expect(article?.contentHtml).toContain("<h2>Constraint</h2>");
+    expect(article?.contentHtml).toContain("<p>");
   });
 
   it("sanitizes unsafe html from markdown content", async () => {

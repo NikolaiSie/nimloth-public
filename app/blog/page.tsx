@@ -16,8 +16,7 @@ export default async function BlogIndexPage() {
         <div className="page-hero__grid">
           <h1>Notes from the workbench.</h1>
           <p>
-            Implementation updates, infrastructure decisions, and shorter
-            lessons from building a quantitative research platform.
+            Lessons from building a quantitative research platform, and short notes on the novel complications in the work.
           </p>
         </div>
       </section>
