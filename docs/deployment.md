@@ -86,7 +86,9 @@ The production workflow mirrors nonprod with a separate backend prefix and proje
 The deployed container image URI is also the Firebase Hosting deployment id.
 When the image changes, Terraform replaces the Hosting version and creates a
 fresh release after the Cloud Run update. This invalidates cached rewritten
-responses at the Firebase edge.
+responses at the Firebase edge. A digest of the deployment id is included in
+the Hosting configuration so Firebase cannot deduplicate the new version with
+the currently active one.
 
 Like nonprod, it imports known singleton resources into Terraform state before apply so reruns can recover from partially-created production infrastructure instead of failing on `409 already exists`.
 Production disables direct Cloud Run IAP and disables the Cloud Run invoker IAM check. This provides public access without an `allUsers` IAM binding, which the organization policy rejects. Firebase Hosting supplies the custom-domain edge, managed certificate, and `www` redirect.

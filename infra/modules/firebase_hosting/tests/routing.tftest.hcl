@@ -34,6 +34,11 @@ run "routes_public_site_to_cloud_run" {
   }
 
   assert {
+    condition     = google_firebase_hosting_version.this.config[0].headers[0].headers["X-Nimloth-Deployment"] == sha256(var.deployment_id)
+    error_message = "The application deployment must be part of the Hosting configuration so Firebase creates a distinct version."
+  }
+
+  assert {
     condition     = google_firebase_hosting_custom_domain.redirect["www.nimlothcapital.com"].redirect_target == "nimlothcapital.com"
     error_message = "The www domain must redirect to the canonical apex domain."
   }

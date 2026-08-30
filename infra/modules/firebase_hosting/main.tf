@@ -28,6 +28,16 @@ resource "google_firebase_hosting_version" "this" {
   }
 
   config {
+    # Firebase may deduplicate versions whose Hosting configuration is
+    # identical. Include a non-sensitive digest of the application deployment
+    # so every image produces a distinct version that can be released.
+    headers {
+      glob = "**"
+      headers = {
+        "X-Nimloth-Deployment" = sha256(var.deployment_id)
+      }
+    }
+
     rewrites {
       glob = "**"
 
