@@ -78,6 +78,7 @@ module "firebase_hosting" {
 
   cloud_run_region       = var.region
   cloud_run_service_name = module.website[0].service_name
+  deployment_id          = var.container_image
   primary_domain         = var.primary_domain
   project_id             = var.project_id
   redirect_domains       = var.redirect_domains

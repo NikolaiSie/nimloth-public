@@ -3,6 +3,7 @@ mock_provider "google-beta" {}
 variables {
   cloud_run_region       = "us-east4"
   cloud_run_service_name = "nimloth-public-web"
+  deployment_id          = "us-east4-docker.pkg.dev/nimloth-public-prod/nimloth-public/nimloth-public:test-sha"
   primary_domain         = "nimlothcapital.com"
   project_id             = "nimloth-public-prod"
   redirect_domains       = ["www.nimlothcapital.com"]
@@ -25,6 +26,11 @@ run "routes_public_site_to_cloud_run" {
   assert {
     condition     = google_firebase_hosting_version.this.config[0].rewrites[0].run[0].region == "us-east4"
     error_message = "Firebase Hosting must preserve the us-east4 default region."
+  }
+
+  assert {
+    condition     = terraform_data.deployment.triggers_replace == "us-east4-docker.pkg.dev/nimloth-public-prod/nimloth-public/nimloth-public:test-sha"
+    error_message = "Firebase Hosting releases must be replaced when the application image changes."
   }
 
   assert {
