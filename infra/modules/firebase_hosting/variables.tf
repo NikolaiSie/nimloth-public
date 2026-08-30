@@ -8,6 +8,16 @@ variable "cloud_run_service_name" {
   description = "Name of the Cloud Run service receiving Hosting rewrites."
 }
 
+variable "deployment_id" {
+  type        = string
+  description = "Identifier that changes with each application deployment and forces a fresh Hosting release."
+
+  validation {
+    condition     = length(trimspace(var.deployment_id)) > 0
+    error_message = "deployment_id must not be empty."
+  }
+}
+
 variable "primary_domain" {
   type        = string
   description = "Canonical public domain served by Firebase Hosting."
