@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { EntryCard } from "@/components/entry-card";
 import type { ContentIndexEntry } from "@/lib/content";
 
 type ArticleCardProps = {
@@ -8,21 +8,13 @@ type ArticleCardProps = {
 
 export function ArticleCard({ article, basePath }: ArticleCardProps) {
   return (
-    <Link className="article-list__item card" href={`/${basePath}/${article.slug}`}>
-      <div className="article-list__meta">
-        <span>{article.publishedAtLabel}</span>
-        <span>{article.readingTimeLabel}</span>
-      </div>
-      <h3>{article.title}</h3>
-      <p>{article.summary}</p>
-      <div className="stat-row">
-        {article.tags.map((tag) => (
-          <span className="tag" key={tag}>
-            {tag}
-          </span>
-        ))}
-      </div>
-      <span className="article-list__cta">Read entry</span>
-    </Link>
+    <EntryCard
+      href={`/${basePath}/${article.slug}`}
+      meta={[article.publishedAtLabel, article.readingTimeLabel]}
+      title={article.title}
+      summary={article.summary}
+      tags={article.tags}
+      ctaLabel="Read entry"
+    />
   );
 }

@@ -1,7 +1,9 @@
+import { ArticleCard } from "@/components/article-card";
 import {
   MomentumOverview,
   type MomentumOverviewPayload,
 } from "@/components/momentum-overview";
+import { getContentIndex } from "@/lib/content";
 import { getLatestMomentumMatrix, getMomentumMetadata } from "@/lib/nimloth-api";
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
@@ -11,6 +13,7 @@ export const metadata = {
 };
 
 export default async function ResearchIndexPage() {
+  const research = await getContentIndex("research");
   let initialPayload: MomentumOverviewPayload | null = null;
   let initialError: string | null = null;
 
@@ -52,6 +55,19 @@ export default async function ResearchIndexPage() {
         initialPayload={initialPayload}
         initialError={initialError}
       />
+      {research.length > 0 ? (
+        <section className="section">
+          <div className="article-list">
+            {research.map((article) => (
+              <ArticleCard
+                key={article.slug}
+                article={article}
+                basePath="research"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

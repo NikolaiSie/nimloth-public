@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
+import { EntryCard } from "@/components/entry-card";
 import { MarketPanel } from "@/components/market-panel";
 import { SectionHeading } from "@/components/section-heading";
 import { getFeaturedPosts } from "@/lib/content";
 
 export default async function HomePage() {
-  const featuredPosts = await getFeaturedPosts("blog", 2);
+  const [featuredPosts, featuredResearch] = await Promise.all([
+    getFeaturedPosts("blog", 2),
+    getFeaturedPosts("research", 1),
+  ]);
 
   return (
     <>
@@ -68,6 +72,23 @@ export default async function HomePage() {
             description="Live momentum research connecting market questions, methodology, and evidence."
             link={{ href: "/research#momentum", label: "View momentum research" }}
           />
+          <div className="article-list">
+            <EntryCard
+              href="/research#momentum"
+              meta={["Live research", "Interactive matrix"]}
+              title="Global stock momentum snapshot"
+              summary="Explore how recent stock momentum relates to forward returns across markets, capitalization groups, and time horizons."
+              tags={["momentum", "global equities"]}
+              ctaLabel="Explore project"
+            />
+            {featuredResearch.map((article) => (
+              <ArticleCard
+                key={article.slug}
+                article={article}
+                basePath="research"
+              />
+            ))}
+          </div>
         </div>
       </section>
     </>
