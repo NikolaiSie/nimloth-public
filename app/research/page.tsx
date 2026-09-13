@@ -8,12 +8,18 @@ import { getLatestMomentumMatrix, getMomentumMetadata } from "@/lib/nimloth-api"
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 export const metadata = {
-  title: "Research",
-  description: "Long-form public research from Nimloth Capital.",
+  title: "Blog",
+  description: "Public projects and field notes from Nimloth Capital.",
 };
 
 export default async function ResearchIndexPage() {
-  const research = await getContentIndex("research");
+  const [research, posts] = await Promise.all([
+    getContentIndex("research"),
+    getContentIndex("blog"),
+  ]);
+  const entries = [...research, ...posts].sort((left, right) =>
+    left.publishedAt < right.publishedAt ? 1 : -1,
+  );
   let initialPayload: MomentumOverviewPayload | null = null;
   let initialError: string | null = null;
 
@@ -44,10 +50,10 @@ export default async function ResearchIndexPage() {
   return (
     <div className="container">
       <section className="page-hero">
-        <p className="eyebrow">Research / Evidence</p>
+        <p className="eyebrow">Blog / Evidence / Field notes</p>
         <div className="page-hero__grid">
           <h2>
-            Research on the core market phenomena that build the foundation of Nimloth strategies.
+            Notes on market phenomena, implementation work, and the evidence trail behind Nimloth strategies.
           </h2>
         </div>
       </section>
@@ -55,10 +61,10 @@ export default async function ResearchIndexPage() {
         initialPayload={initialPayload}
         initialError={initialError}
       />
-      {research.length > 0 ? (
+      {entries.length > 0 ? (
         <section className="section">
           <div className="article-list">
-            {research.map((article) => (
+            {entries.map((article) => (
               <ArticleCard
                 key={article.slug}
                 article={article}

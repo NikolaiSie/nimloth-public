@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s | Nimloth Capital",
   },
   description:
-    "Public research, engineering notes, and market experiments from Nimloth Capital.",
+    "Public blog, engineering notes, and market experiments from Nimloth Capital.",
   metadataBase: new URL("https://nimlothcapital.com"),
   alternates: {
     canonical: "./",

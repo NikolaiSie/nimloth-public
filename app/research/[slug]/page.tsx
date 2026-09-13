@@ -9,15 +9,21 @@ type ResearchArticlePageProps = {
 };
 
 export async function generateStaticParams() {
-  const research = await getContentIndex("research");
-  return research.map((article) => ({ slug: article.slug }));
+  const [research, posts] = await Promise.all([
+    getContentIndex("research"),
+    getContentIndex("blog"),
+  ]);
+  const slugs = new Set([...research, ...posts].map((article) => article.slug));
+  return Array.from(slugs, (slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: ResearchArticlePageProps) {
   const { slug } = params;
-  const article = await getContentBySlug("research", slug);
+  const article =
+    (await getContentBySlug("research", slug)) ??
+    (await getContentBySlug("blog", slug));
 
   if (!article) {
     return {};
@@ -33,11 +39,13 @@ export default async function ResearchArticlePage({
   params,
 }: ResearchArticlePageProps) {
   const { slug } = params;
-  const article = await getContentBySlug("research", slug);
+  const article =
+    (await getContentBySlug("research", slug)) ??
+    (await getContentBySlug("blog", slug));
 
   if (!article) {
     notFound();
   }
 
-  return <ArticlePage article={article} sectionLabel="Research" />;
+  return <ArticlePage article={article} sectionLabel="Blog" />;
 }

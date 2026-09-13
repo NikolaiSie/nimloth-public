@@ -255,14 +255,14 @@ svg {
 }
 
 .hero-card h1 {
-  max-width: 13ch;
-  font-size: clamp(4.2rem, 8.6vw, 8.3rem);
-  line-height: 0.82;
+  max-width: 16.5ch;
+  font-size: clamp(3.7rem, 6.6vw, 6.5rem);
+  line-height: 0.9;
 }
 
 .hero-card h1 span {
   display: block;
-  margin-left: 0.74em;
+  margin-left: 0.55em;
   color: var(--gold-light);
   font-style: italic;
 }
@@ -425,6 +425,24 @@ svg {
   font-weight: 400;
   line-height: 0.98;
   letter-spacing: -0.035em;
+}
+
+.mandate__portrait {
+  width: clamp(8rem, 17vw, 11rem);
+  aspect-ratio: 1;
+  margin-top: 2rem;
+  object-fit: cover;
+  object-position: 45% 28%;
+  opacity: 0.78;
+  filter: saturate(0.78) contrast(1.03);
+  mask-image:
+    linear-gradient(to right, transparent, #000 18%, #000 82%, transparent),
+    linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 18%, #000 82%, transparent),
+    linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
 }
 
 .mandate__grid {
@@ -915,6 +933,18 @@ svg {
   text-transform: uppercase;
 }
 
+.heatmap-corner {
+  gap: 0.22rem;
+  justify-items: start;
+  padding-right: 0.55rem;
+  padding-left: 0.65rem;
+  text-align: left;
+}
+
+.heatmap-corner span {
+  display: block;
+}
+
 .heatmap-row-label {
   display: flex;
   min-width: 0;
@@ -1094,6 +1124,11 @@ svg {
     grid-template-columns: 1fr;
   }
 
+  .hero-card h1 {
+    max-width: 15.5ch;
+    font-size: clamp(3.5rem, 8vw, 5rem);
+  }
+
   .hero-side {
     max-width: 37rem;
   }
@@ -1158,7 +1193,9 @@ svg {
   }
 
   .hero-card h1 {
-    font-size: clamp(3.5rem, 17vw, 5.6rem);
+    max-width: 100%;
+    font-size: clamp(2.8rem, 11.5vw, 4.5rem);
+    line-height: 0.96;
   }
 
   .hero-card h1 span {
@@ -1180,6 +1217,10 @@ svg {
 
   .mandate__item p {
     grid-column: 2;
+  }
+
+  .mandate__portrait {
+    width: min(9rem, 42vw);
   }
 
   .section-heading,
@@ -1265,6 +1306,10 @@ svg {
 }
 
 @media (max-width: 420px) {
+  .hero-card h1 {
+    font-size: clamp(2.35rem, 10.5vw, 2.9rem);
+  }
+
   .hero-actions {
     align-items: stretch;
     flex-direction: column;

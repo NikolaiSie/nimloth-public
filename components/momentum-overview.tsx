@@ -165,7 +165,7 @@ export function MomentumOverview({
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>
-            <p className="eyebrow">Momentum overview / Live research</p>
+            <p className="eyebrow">Momentum overview / Live project</p>
             <h2>Global stock momentum snapshot</h2>
             <p className="research-overview__intro">
               Stock momentum tracks whether assets with stronger recent returns
@@ -262,7 +262,13 @@ export function MomentumOverview({
           <>
             <div className="heatmap-shell">
               <div className="heatmap-grid">
-                <div className="heatmap-corner">Sort feature</div>
+                <div
+                  className="heatmap-corner"
+                  aria-label="Columns are forward periods. Rows are momentum metrics."
+                >
+                  <span>Fwd periods -&gt;</span>
+                  <span>Momentum metrics v</span>
+                </div>
                 {matrix.columns.map((column) => (
                   <div className="heatmap-column-label" key={column} title={column}>
                     {formatHorizonLabel(column)}
