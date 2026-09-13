@@ -8,30 +8,27 @@ import { getFeaturedPosts } from "@/lib/content";
 export default async function HomePage() {
   const [featuredPosts, featuredResearch] = await Promise.all([
     getFeaturedPosts("blog", 2),
-    getFeaturedPosts("research", 1),
+    getFeaturedPosts("research", 2),
   ]);
+  const featuredEntries = [...featuredResearch, ...featuredPosts];
 
   return (
     <>
       <section className="hero">
         <div className="container hero__grid">
           <div className="hero-card">
-            <p className="eyebrow">Independent market research / 2026</p>
             <h1>
-              Soft insight.
-              <span>Hard rigor.</span>
+              Turning evidence
+              <span>into instruments.</span>
             </h1>
             <p>
-              Nimloth Capital is a two-year research program in market data, artificial intelligence,
-              and quantitative trading that aims to spin into an Equity Fund by 2028. This is
-              the public record of the work: methods, results, and the systems beneath them.
+              Nimloth Capital is a research program in market data, artificial intelligence,
+              and quantitative trading. This is the public record of the work: methods,
+              results, and the systems beneath them.
             </p>
             <div className="hero-actions">
               <Link className="button-link" href="/research">
-                Explore research
-              </Link>
-              <Link className="button-link--secondary" href="/blog">
-                Read the journal
+                Read the blog
               </Link>
             </div>
           </div>
@@ -44,23 +41,48 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="container hero__footer">
-          <span>01 / Research</span>
-          <span>02 / Engineering</span>
+          <span>01 / Blog</span>
+          <span>02 / About</span>
           <span>03 / Publication</span>
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <SectionHeading
-            title="Field notes"
-            description="Short entries from the research and engineering process."
-            link={{ href: "/blog", label: "View journal" }}
-          />
-          <div className="article-list">
-            {featuredPosts.map((post) => (
-              <ArticleCard key={post.slug} article={post} basePath="blog" />
-            ))}
+      <section className="section section--mandate" id="about">
+        <div className="container mandate">
+          <div className="mandate__heading">
+            <p className="eyebrow">About</p>
+            <h2>What Nimloth is building.</h2>
+            <img
+              className="mandate__portrait"
+              src="/C0BAA8F7-94F3-42CE-9D08-5E2A5F4D3E3A.jpeg"
+              alt="Nikolai Sie"
+            />
+          </div>
+          <div className="mandate__grid">
+            <div className="mandate__item">
+              <span>01</span>
+              <h3>Research program</h3>
+              <p>
+                A two-year investigation into market data, artificial intelligence,
+                and quantitative trading systems.
+              </p>
+            </div>
+            <div className="mandate__item">
+              <span>02</span>
+              <h3>Public record</h3>
+              <p>
+                Methods, results, and engineering notes are published as the work
+                develops, so the path to conviction is visible.
+              </p>
+            </div>
+            <div className="mandate__item">
+              <span>03</span>
+              <h3>Operating discipline</h3>
+              <p>
+                The work favors tested evidence, reproducible systems, and
+                instruments that can be inspected under changing market conditions.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -68,20 +90,20 @@ export default async function HomePage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            title="Research ledger"
-            description="Live momentum research connecting market questions, methodology, and evidence."
-            link={{ href: "/research#momentum", label: "View momentum research" }}
+            title="Blog"
+            description="Live projects, field notes, and engineering updates from the work."
+            link={{ href: "/research", label: "View blog" }}
           />
           <div className="article-list">
             <EntryCard
               href="/research#momentum"
-              meta={["Live research", "Interactive matrix"]}
+              meta={["Live project", "Interactive matrix"]}
               title="Global stock momentum snapshot"
               summary="Explore how recent stock momentum relates to forward returns across markets, capitalization groups, and time horizons."
               tags={["momentum", "global equities"]}
               ctaLabel="Explore project"
             />
-            {featuredResearch.map((article) => (
+            {featuredEntries.map((article) => (
               <ArticleCard
                 key={article.slug}
                 article={article}

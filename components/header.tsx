@@ -11,13 +11,13 @@ export function Header() {
           </span>
           <span className="brand-mark__copy">
             <strong>Nimloth Capital</strong>
-            <small>Public research</small>
+            <small>Public blog</small>
           </span>
         </Link>
         <nav className="site-nav" aria-label="Primary">
           <Link href="/">Home</Link>
-          <Link href="/blog">Journal</Link>
-          <Link href="/research">Research</Link>
+          <Link href="/#about">About</Link>
+          <Link href="/research">Blog</Link>
         </nav>
       </div>
     </header>
