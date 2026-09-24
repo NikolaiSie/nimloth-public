@@ -384,28 +384,6 @@ svg {
   color: var(--gold-light);
 }
 
-.hero__footer {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-top: clamp(4rem, 8vw, 7rem);
-  padding-top: 1.2rem;
-  color: var(--sea-pale);
-  border-top: 1px solid rgba(197, 208, 209, 0.2);
-  font-family: var(--ui);
-  font-size: 0.58rem;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-}
-
-.hero__footer span:nth-child(2) {
-  text-align: center;
-}
-
-.hero__footer span:last-child {
-  text-align: right;
-}
-
 .section {
   padding: clamp(4.5rem, 9vw, 8rem) 0;
 }
@@ -1319,11 +1297,6 @@ svg {
 
   .hero::before {
     right: -28rem;
-  }
-
-  .hero__footer {
-    gap: 0.4rem;
-    font-size: 0.48rem;
   }
 
   .mandate__item {

@@ -33,11 +33,6 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <div className="container hero__footer">
-          <span>01 / Blog</span>
-          <span>02 / About</span>
-          <span>03 / Publication</span>
-        </div>
       </section>
 
       <section className="section section--mandate" id="about">
