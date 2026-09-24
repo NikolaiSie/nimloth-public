@@ -231,6 +231,10 @@ svg {
   align-items: end;
 }
 
+.hero__grid--single {
+  grid-template-columns: 1fr;
+}
+
 .hero-card {
   max-width: 53rem;
 }
