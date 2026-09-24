@@ -5,7 +5,10 @@ import { getContentBySlug, getContentIndex } from "@/lib/content";
 describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
-    expect(posts.map((post) => post.slug)).toEqual(["why-i-am-building-nimloth"]);
+    expect(posts.map((post) => post.slug)).toEqual([
+      "momentum",
+      "why-i-am-building-nimloth",
+    ]);
   });
 
   it("renders article markdown into html", async () => {
