@@ -68,7 +68,7 @@ const matrixQuerySchema = z.object({
 
 const matrixSliceSchema = z.object({
   schema_version: z.string().optional(),
-  mode: z.literal("latest_available").optional(),
+  mode: z.enum(["latest_available", "date_snapshot"]).optional(),
   date: z.string().nullable(),
   latest_date: z.string().optional(),
   country: z.string(),

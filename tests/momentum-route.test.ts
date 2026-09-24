@@ -131,7 +131,10 @@ describe("momentum research route", () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => matrixPayload("2026-09-08"),
+        json: async () => ({
+          ...matrixPayload("2026-09-08"),
+          mode: "date_snapshot",
+        }),
       });
     vi.stubGlobal("fetch", fetchMock);
 
