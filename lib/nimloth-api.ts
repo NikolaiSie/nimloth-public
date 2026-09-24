@@ -26,9 +26,9 @@ export type MomentumMatrixQuery = {
 
 export type MomentumMatrixSlice = {
   schema_version?: string;
-  mode?: "latest_available";
+  mode?: "latest_available" | "date_snapshot";
   date: string | null;
-  latest_date?: string;
+  latest_date?: string | null;
   country: string;
   cap: string;
   aggregation: string;
@@ -70,7 +70,7 @@ const matrixSliceSchema = z.object({
   schema_version: z.string().optional(),
   mode: z.enum(["latest_available", "date_snapshot"]).optional(),
   date: z.string().nullable(),
-  latest_date: z.string().optional(),
+  latest_date: z.string().nullable().optional(),
   country: z.string(),
   cap: z.string(),
   aggregation: z.string(),

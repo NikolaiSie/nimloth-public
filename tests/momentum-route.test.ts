@@ -134,6 +134,7 @@ describe("momentum research route", () => {
         json: async () => ({
           ...matrixPayload("2026-09-08"),
           mode: "date_snapshot",
+          latest_date: null,
         }),
       });
     vi.stubGlobal("fetch", fetchMock);
