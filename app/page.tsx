@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
-import { EntryCard } from "@/components/entry-card";
 import { MarketPanel } from "@/components/market-panel";
 import { SectionHeading } from "@/components/section-heading";
 import { getFeaturedPosts } from "@/lib/content";
@@ -18,8 +17,8 @@ export default async function HomePage() {
         <div className="container hero__grid">
           <div className="hero-card">
             <h1>
-              Turning evidence
-              <span>into instruments.</span>
+              Market insights
+              <span>with academic rigor.</span>
             </h1>
             <p>
               Nimloth Capital is a research program in market data, artificial intelligence,
@@ -57,32 +56,20 @@ export default async function HomePage() {
               src="/C0BAA8F7-94F3-42CE-9D08-5E2A5F4D3E3A.jpeg"
               alt="Nikolai Sie"
             />
+            <a className="mandate__email" href="mailto:nikolai.sie@gmail.com">
+              nikolai.sie@gmail.com
+            </a>
           </div>
-          <div className="mandate__grid">
-            <div className="mandate__item">
-              <span>01</span>
-              <h3>Research program</h3>
-              <p>
-                A two-year investigation into market data, artificial intelligence,
-                and quantitative trading systems.
-              </p>
-            </div>
-            <div className="mandate__item">
-              <span>02</span>
-              <h3>Public record</h3>
-              <p>
-                Methods, results, and engineering notes are published as the work
-                develops, so the path to conviction is visible.
-              </p>
-            </div>
-            <div className="mandate__item">
-              <span>03</span>
-              <h3>Operating discipline</h3>
-              <p>
-                The work favors tested evidence, reproducible systems, and
-                instruments that can be inspected under changing market conditions.
-              </p>
-            </div>
+          <div className="mandate__intro">
+            <p>
+              I spent the past 8 years trading and managing a $15 billion
+              Emerging Markets equity portfolio for Norway&apos;s $2 trillion
+              Sovereign Wealth Fund. Now I&apos;m returning to school to create my
+              own quantitative equity strategy. Columbia&apos;s dual MBA and MS
+              Engineering program will be my place to experiment and build
+              before returning to the workforce, and this site is the place
+              where I write about any novel problems that come up along the way.
+            </p>
           </div>
         </div>
       </section>
@@ -95,14 +82,6 @@ export default async function HomePage() {
             link={{ href: "/research", label: "View blog" }}
           />
           <div className="article-list">
-            <EntryCard
-              href="/research#momentum"
-              meta={["Live project", "Interactive matrix"]}
-              title="Global stock momentum snapshot"
-              summary="Explore how recent stock momentum relates to forward returns across markets, capitalization groups, and time horizons."
-              tags={["momentum", "global equities"]}
-              ctaLabel="Explore project"
-            />
             {featuredEntries.map((article) => (
               <ArticleCard
                 key={article.slug}

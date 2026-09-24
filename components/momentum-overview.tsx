@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MomentumMatrixSlice, MomentumMetadata } from "@/lib/nimloth-api";
 import {
   formatHeatmapValue,
@@ -32,6 +32,7 @@ export function MomentumOverview({
   const [payload, setPayload] = useState<MomentumOverviewPayload | null>(initialPayload);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialError);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
   const [date, setDate] = useState(initialDateSelection);
   const [country, setCountry] = useState(initialPayload?.filters.country ?? "ALL");
   const [cap, setCap] = useState<MomentumOverviewPayload["filters"]["cap"]>(
@@ -116,6 +117,25 @@ export function MomentumOverview({
   const matrix = payload?.matrix ?? null;
   const metadata = payload?.metadata ?? null;
   const maxAbsoluteValue = matrix ? getMaxAbsoluteValue(matrix.values) : 0;
+  const dateMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        dateMenuRef.current &&
+        event.target instanceof Node &&
+        !dateMenuRef.current.contains(event.target)
+      ) {
+        setIsDateMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
 
   function formatHorizonLabel(value: string) {
     return value
@@ -160,22 +180,27 @@ export function MomentumOverview({
     return new Intl.NumberFormat("en-US").format(value);
   }
 
+  const dateOptions = [
+    { label: "Latest", value: "LATEST" },
+    ...[...(metadata?.dates ?? [])]
+      .slice()
+      .reverse()
+      .map((option) => ({
+        label: formatDateLabel(option),
+        value: option,
+      })),
+  ];
+  const selectedDateLabel =
+    dateOptions.find((option) => option.value === date)?.label ?? "Latest";
+
   return (
     <section className="section" id="momentum">
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>
-            <p className="eyebrow">Momentum overview / Live project</p>
             <h2>Global stock momentum snapshot</h2>
-            <p className="research-overview__intro">
-              Stock momentum tracks whether assets with stronger recent returns
-              continue to outperform over the next horizon.
-            </p>
           </div>
           <div className="research-overview__meta">
-            <span className="tag">
-              {isLoading ? "Refreshing matrix" : "Momentum matrix"}
-            </span>
             {matrix ? (
               <span className="tag">
                 {matrix.mode === "latest_available"
@@ -187,20 +212,36 @@ export function MomentumOverview({
         </div>
 
         <div className="research-filters">
-          <label className="research-filter">
+          <div className="research-filter research-filter--date" ref={dateMenuRef}>
             <span>Date</span>
-            <select value={date} onChange={(event) => setDate(event.target.value)}>
-              <option value="LATEST">Latest</option>
-              {[...(metadata?.dates ?? [])]
-                .slice()
-                .reverse()
-                .map((option) => (
-                  <option key={option} value={option}>
-                    {formatDateLabel(option)}
-                  </option>
+            <button
+              aria-expanded={isDateMenuOpen}
+              className="date-menu__button"
+              type="button"
+              onClick={() => setIsDateMenuOpen((isOpen) => !isOpen)}
+            >
+              {selectedDateLabel}
+            </button>
+            {isDateMenuOpen ? (
+              <div className="date-menu__list" role="listbox">
+                {dateOptions.map((option) => (
+                  <button
+                    aria-selected={option.value === date}
+                    className="date-menu__option"
+                    key={option.value}
+                    role="option"
+                    type="button"
+                    onClick={() => {
+                      setDate(option.value);
+                      setIsDateMenuOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
                 ))}
-            </select>
-          </label>
+              </div>
+            ) : null}
+          </div>
 
           <label className="research-filter">
             <span>Country</span>
