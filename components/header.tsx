@@ -11,7 +11,7 @@ export function Header() {
           </span>
           <span className="brand-mark__copy">
             <strong>Nimloth Capital</strong>
-            <small>Public blog</small>
+            <small>Independent Quantitative Research and Engineering</small>
           </span>
         </Link>
         <nav className="site-nav" aria-label="Primary">

@@ -18,11 +18,6 @@ export function ArticlePage({ article, sectionLabel, children }: ArticlePageProp
         <div className="article-meta">
           <span>{article.publishedAtLabel}</span>
           <span>{article.readingTimeLabel}</span>
-          {article.tags.map((tag) => (
-            <span className="tag" key={tag}>
-              {tag}
-            </span>
-          ))}
         </div>
       </section>
       <article className="article">

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
-import { MarketPanel } from "@/components/market-panel";
 import { SectionHeading } from "@/components/section-heading";
 import { compareBlogCardOrder, getFeaturedPosts } from "@/lib/content";
 
@@ -16,7 +15,7 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
-        <div className="container hero__grid">
+        <div className="container hero__grid hero__grid--single">
           <div className="hero-card">
             <h1>
               Market insights
@@ -33,18 +32,6 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          <div className="hero-side">
-            <div className="hero-side__label">
-              <span>Current observation</span>
-              <span>Server-side data</span>
-            </div>
-            <MarketPanel />
-          </div>
-        </div>
-        <div className="container hero__footer">
-          <span>01 / Blog</span>
-          <span>02 / About</span>
-          <span>03 / Publication</span>
         </div>
       </section>
 

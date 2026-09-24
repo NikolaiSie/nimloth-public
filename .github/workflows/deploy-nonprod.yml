@@ -11,7 +11,7 @@ jobs:
     environment: nonprod
     concurrency:
       group: nonprod-deploy
-      cancel-in-progress: true
+      cancel-in-progress: false
 
     permissions:
       contents: read
@@ -65,6 +65,11 @@ jobs:
             echo "Terraform init failed; retrying provider download in $((attempt * 10)) seconds."
             sleep "$((attempt * 10))"
           done
+
+      - name: Clear requested Terraform state lock
+        if: ${{ vars.TF_FORCE_UNLOCK_ID != '' }}
+        working-directory: infra/environments/nonprod
+        run: terraform force-unlock -force "${{ vars.TF_FORCE_UNLOCK_ID }}"
 
       - name: Adopt existing bootstrap resources into Terraform state
         working-directory: infra/environments/nonprod
