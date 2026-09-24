@@ -51,6 +51,31 @@ function formatPublishedAt(dateString: string) {
   }).format(new Date(dateString));
 }
 
+export function compareContentNewestFirst(
+  left: ContentIndexEntry,
+  right: ContentIndexEntry,
+) {
+  return right.publishedAt.localeCompare(left.publishedAt);
+}
+
+export function compareBlogCardOrder(
+  left: ContentIndexEntry,
+  right: ContentIndexEntry,
+) {
+  const priority = new Map([
+    ["why-i-am-building-nimloth", 0],
+    ["momentum", 1],
+  ]);
+  const leftPriority = priority.get(left.slug) ?? 100;
+  const rightPriority = priority.get(right.slug) ?? 100;
+
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
+  }
+
+  return compareContentNewestFirst(left, right);
+}
+
 async function listMarkdownFiles(type: ContentType) {
   const entries = await fs.readdir(getDirectory(type), { withFileTypes: true });
   return entries
@@ -93,9 +118,7 @@ export async function getContentIndex(type: ContentType) {
     }),
   );
 
-  return entries.sort((left, right) =>
-    left.publishedAt < right.publishedAt ? 1 : -1,
-  );
+  return entries.sort(compareContentNewestFirst);
 }
 
 export async function getFeaturedPosts(type: ContentType, count: number) {

@@ -6,8 +6,7 @@ summary: >-
   and trading.
 publishedAt: 2026-09-13
 tags:
-  - personal
-  - research
+  - nimloth
 featured: true
 ---
 
