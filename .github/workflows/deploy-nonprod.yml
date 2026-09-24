@@ -66,6 +66,11 @@ jobs:
             sleep "$((attempt * 10))"
           done
 
+      - name: Clear requested Terraform state lock
+        if: ${{ vars.TF_FORCE_UNLOCK_ID != '' }}
+        working-directory: infra/environments/nonprod
+        run: terraform force-unlock -force "${{ vars.TF_FORCE_UNLOCK_ID }}"
+
       - name: Adopt existing bootstrap resources into Terraform state
         working-directory: infra/environments/nonprod
         shell: bash
