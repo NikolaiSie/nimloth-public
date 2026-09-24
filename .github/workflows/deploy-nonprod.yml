@@ -11,7 +11,7 @@ jobs:
     environment: nonprod
     concurrency:
       group: nonprod-deploy
-      cancel-in-progress: true
+      cancel-in-progress: false
 
     permissions:
       contents: read
