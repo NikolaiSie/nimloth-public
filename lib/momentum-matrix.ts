@@ -28,10 +28,10 @@ function expandStringRow(
   return targetColumns.map((column) => byColumn.get(column) ?? null);
 }
 
-function isMovingAverageLevelFeature(rowLabel: string) {
+function isLevelToMovingAverageFeature(rowLabel: string) {
   const normalized = rowLabel.toLowerCase();
 
-  return normalized.startsWith("ma_");
+  return normalized.startsWith("level_to_ma_");
 }
 
 function filterRows<T>(rows: T[], rowIndexes: number[]) {
@@ -46,7 +46,7 @@ export function normalizeMomentumMatrixColumns(
     metadata.target_horizons.length > 0 ? metadata.target_horizons : slice.columns;
   const rowIndexesToKeep = slice.rows
     .map((rowLabel, rowIndex) =>
-      isMovingAverageLevelFeature(rowLabel) ? null : rowIndex,
+      isLevelToMovingAverageFeature(rowLabel) ? null : rowIndex,
     )
     .filter((rowIndex): rowIndex is number => rowIndex !== null);
   const hasFilteredRows = rowIndexesToKeep.length !== slice.rows.length;
