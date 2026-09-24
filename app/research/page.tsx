@@ -1,5 +1,5 @@
 import { ArticleCard } from "@/components/article-card";
-import { getContentIndex } from "@/lib/content";
+import { compareBlogCardOrder, getContentIndex } from "@/lib/content";
 
 export const metadata = {
   title: "Blog",
@@ -11,9 +11,7 @@ export default async function ResearchIndexPage() {
     getContentIndex("research"),
     getContentIndex("blog"),
   ]);
-  const entries = [...research, ...posts].sort((left, right) =>
-    left.publishedAt < right.publishedAt ? 1 : -1,
-  );
+  const entries = [...research, ...posts].sort(compareBlogCardOrder);
 
   return (
     <div className="container">
@@ -26,7 +24,7 @@ export default async function ResearchIndexPage() {
         </div>
       </section>
       {entries.length > 0 ? (
-        <section className="section">
+        <section className="section blog-index__entries">
           <div className="article-list">
             {entries.map((article) => (
               <ArticleCard

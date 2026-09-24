@@ -17,6 +17,14 @@ const querySchema = z.object({
   aggregation: z.enum(["mean", "median"]).default("median"),
 });
 
+function normalizeDateParam(date: string | undefined) {
+  const trimmed = date?.trim();
+  if (!trimmed || trimmed.toUpperCase() === "LATEST") {
+    return undefined;
+  }
+  return trimmed;
+}
+
 function toErrorResponse(error: unknown) {
   if (error instanceof NimlothApiError) {
     if (error.status === 401) {
@@ -54,13 +62,14 @@ export async function GET(request: NextRequest) {
     cap: request.nextUrl.searchParams.get("cap") ?? undefined,
     aggregation: request.nextUrl.searchParams.get("aggregation") ?? undefined,
   });
+  const selectedDate = normalizeDateParam(parsed.date);
 
   try {
     const metadata = await getMomentumMetadata();
-    const rawMatrix = parsed.date
+    const rawMatrix = selectedDate
       ? await getMomentumMatrix({
           ...parsed,
-          date: parsed.date,
+          date: selectedDate,
         })
       : await getLatestMomentumMatrix(parsed);
 
@@ -80,7 +89,7 @@ export async function GET(request: NextRequest) {
         country: parsed.country,
         cap: parsed.cap,
         aggregation: parsed.aggregation,
-        date: parsed.date ?? null,
+        date: selectedDate ?? null,
       },
     });
   } catch (error) {

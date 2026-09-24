@@ -2,14 +2,16 @@ import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
 import { MarketPanel } from "@/components/market-panel";
 import { SectionHeading } from "@/components/section-heading";
-import { getFeaturedPosts } from "@/lib/content";
+import { compareBlogCardOrder, getFeaturedPosts } from "@/lib/content";
 
 export default async function HomePage() {
   const [featuredPosts, featuredResearch] = await Promise.all([
     getFeaturedPosts("blog", 2),
     getFeaturedPosts("research", 2),
   ]);
-  const featuredEntries = [...featuredResearch, ...featuredPosts];
+  const featuredEntries = [...featuredResearch, ...featuredPosts].sort(
+    compareBlogCardOrder,
+  );
 
   return (
     <>
@@ -50,7 +52,7 @@ export default async function HomePage() {
         <div className="container mandate">
           <div className="mandate__heading">
             <p className="eyebrow">About</p>
-            <h2>What Nimloth is building.</h2>
+            <h2>Building Nimloth</h2>
             <img
               className="mandate__portrait"
               src="/C0BAA8F7-94F3-42CE-9D08-5E2A5F4D3E3A.jpeg"

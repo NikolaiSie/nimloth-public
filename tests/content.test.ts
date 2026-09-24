@@ -1,6 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { getContentBySlug, getContentIndex } from "@/lib/content";
+import {
+  compareBlogCardOrder,
+  getContentBySlug,
+  getContentIndex,
+} from "@/lib/content";
 
 describe("content loading", () => {
   it("sorts blog content newest first", async () => {
@@ -8,6 +12,14 @@ describe("content loading", () => {
     expect(posts.map((post) => post.slug)).toEqual([
       "momentum",
       "why-i-am-building-nimloth",
+    ]);
+  });
+
+  it("orders the primary blog cards with the end-to-end post first", async () => {
+    const posts = await getContentIndex("blog");
+    expect(posts.sort(compareBlogCardOrder).map((post) => post.slug)).toEqual([
+      "why-i-am-building-nimloth",
+      "momentum",
     ]);
   });
 
