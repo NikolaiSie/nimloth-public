@@ -51,13 +51,13 @@ export default async function HomePage() {
           </div>
           <div className="mandate__intro">
             <p>
-              I spent the past 8 years trading and managing a $15 billion
+              I spent the past eight years trading and managing a $15 billion
               Emerging Markets equity portfolio for Norway&apos;s $2 trillion
-              Sovereign Wealth Fund. Now I&apos;m returning to school to create my
-              own quantitative equity strategy. Columbia&apos;s dual MBA and MS
-              Engineering program will be my place to experiment and build
-              before returning to the workforce, and this site is the place
-              where I write about any novel problems that come up along the way.
+              Sovereign Wealth Fund. Now I&apos;m returning to school to deepen my
+              quantitative and engineering toolkit through Columbia&apos;s dual MBA/MS
+              Engineering program: Nimloth is where I put that work into practice:
+              building an end-to-end systematic equities platform and documenting the
+              research, engineering, and investment problems I encounter along the way.
             </p>
           </div>
         </div>
