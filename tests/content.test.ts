@@ -1,10 +1,17 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
+  type ContentEntry,
   compareBlogCardOrder,
   getContentBySlug,
   getContentIndex,
 } from "@/lib/content";
+
+function htmlOf(article: ContentEntry | null) {
+  return (article?.segments ?? [])
+    .map((segment) => (segment.kind === "html" ? segment.html : `[[${segment.name}]]`))
+    .join("");
+}
 
 describe("content loading", () => {
   it("sorts blog content newest first", async () => {
@@ -26,7 +33,7 @@ describe("content loading", () => {
   it("renders article markdown into html", async () => {
     const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
     expect(article).not.toBeNull();
-    expect(article?.contentHtml).toContain("<p>");
+    expect(htmlOf(article)).toContain("<p>");
   });
 
   it("sanitizes unsafe html from markdown content", async () => {
@@ -55,16 +62,16 @@ describe("content loading", () => {
       const article = await getContentBySlug("research", slug);
 
       expect(article).not.toBeNull();
-      expect(article?.contentHtml).toContain("<h1>Title</h1>");
-      expect(article?.contentHtml).not.toContain("<script>");
-      expect(article?.contentHtml).not.toContain("onerror=");
-      expect(article?.contentHtml).not.toContain("javascript:alert");
+      expect(htmlOf(article)).toContain("<h1>Title</h1>");
+      expect(htmlOf(article)).not.toContain("<script>");
+      expect(htmlOf(article)).not.toContain("onerror=");
+      expect(htmlOf(article)).not.toContain("javascript:alert");
     } finally {
       await fs.unlink(filePath).catch(() => undefined);
     }
   });
 
-  it("splits content at the {{heatmap}} embed marker", async () => {
+  it("splits content at embed markers, in document order", async () => {
     const slug = "embed-marker-test";
     const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
 
@@ -85,25 +92,48 @@ describe("content loading", () => {
           "## Below the chart",
           "",
           "![Chart](/blog/momentum/chart.png)",
+          "",
+          "{{ cumulative }}",
+          "",
+          "{{unknown}}",
         ].join("\n"),
         "utf8",
       );
 
       const article = await getContentBySlug("research", slug);
+      const segments = article?.segments ?? [];
 
-      expect(article?.contentHtml).toContain("Intro paragraph.");
-      expect(article?.contentHtml).not.toContain("Below the chart");
-      expect(article?.contentHtml).not.toContain("{{heatmap}}");
-      expect(article?.contentHtmlAfterEmbed).toContain("<h2>Below the chart</h2>");
-      expect(article?.contentHtmlAfterEmbed).toContain('<img src="/blog/momentum/chart.png" alt="Chart">');
-      expect(article?.contentHtmlAfterEmbed).not.toContain("Intro paragraph.");
+      expect(segments.map((segment) => segment.kind)).toEqual([
+        "html",
+        "embed",
+        "html",
+        "embed",
+        "html",
+      ]);
+      expect(segments[0]).toMatchObject({ kind: "html" });
+      expect(segments[0].kind === "html" && segments[0].html).toContain("Intro paragraph.");
+      expect(segments[1]).toEqual({ kind: "embed", name: "heatmap" });
+      const middle = segments[2].kind === "html" ? segments[2].html : "";
+      expect(middle).toContain("<h2>Below the chart</h2>");
+      expect(middle).toContain('<img src="/blog/momentum/chart.png" alt="Chart">');
+      expect(middle).not.toContain("Intro paragraph.");
+      expect(segments[3]).toEqual({ kind: "embed", name: "cumulative" });
+      expect(segments[4].kind === "html" && segments[4].html).toContain("{{unknown}}");
     } finally {
       await fs.unlink(filePath).catch(() => undefined);
     }
   });
 
-  it("leaves contentHtmlAfterEmbed null when there is no marker", async () => {
+  it("renders a post without markers as a single html segment", async () => {
     const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
-    expect(article?.contentHtmlAfterEmbed).toBeNull();
+    expect(article?.segments.map((segment) => segment.kind)).toEqual(["html"]);
+  });
+
+  it("places the momentum post's embeds in order", async () => {
+    const article = await getContentBySlug("blog", "momentum");
+    const embeds = (article?.segments ?? []).flatMap((segment) =>
+      segment.kind === "embed" ? [segment.name] : [],
+    );
+    expect(embeds).toEqual(["heatmap", "cumulative"]);
   });
 });

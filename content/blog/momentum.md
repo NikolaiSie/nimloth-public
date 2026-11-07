@@ -18,3 +18,12 @@ The cells show the mean, median, or weighted (by market cap) mean total return o
 {{heatmap}}
 
 \* The columns have forward returns from the selected date (for "Latest", fwd returns show the most recently completed periods, mean 1y return is the momentum metric's performance over the past year).
+
+See the cumulative return of the most traditional momentum metric (1 year except the latest month). It's a remarkably consistent signal... except for right now. In the time of writing (Nov 7, 2026) we're having a harsh momentum meltdown and a famous hedge fund deleveraging episode. It's not surprising that this strategy works amazingly until it doesn't. The surprising thing is that people allocate the most capital to it in the sharp run-up right before the crashes, which means the consistency in the graph far overstates the gains made by investors. That's the sad truth of all financial markets.
+
+![Cumulative top-minus-bottom quintile 1-month return for 12-month-ex-1-month momentum, weighted mean, 2016–2026](/blog/momentum/cumulative-12m-ex-1m.png)
+
+Here's a widget to explore the cumulative momentum returns for many signals in most major markets (sorry no India or Japan yet, hold your breath) across cap buckets since 2010.
+
+
+{{cumulative}}

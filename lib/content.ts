@@ -29,25 +29,45 @@ export type ContentIndexEntry = {
   featured: boolean;
 };
 
+export const EMBED_NAMES = ["heatmap", "cumulative"] as const;
+
+export type EmbedName = (typeof EMBED_NAMES)[number];
+
+export type ContentSegment =
+  | { kind: "html"; html: string }
+  | { kind: "embed"; name: EmbedName };
+
 export type ContentEntry = ContentIndexEntry & {
-  /** Rendered markdown before the embed marker (or the whole body if there is none). */
-  contentHtml: string;
-  /** Rendered markdown after the embed marker, or null when the post has no marker. */
-  contentHtmlAfterEmbed: string | null;
+  /** Rendered markdown and interactive embeds, in document order. */
+  segments: ContentSegment[];
 };
 
 /**
- * A line containing only `{{heatmap}}` marks where a post's interactive embed
- * (e.g. the momentum heatmap) is placed. Posts without it get the embed at the end.
+ * A line containing only `{{name}}` (e.g. `{{heatmap}}`, `{{cumulative}}`) marks
+ * where a post's interactive embed is placed. Embeds a page provides but the
+ * post doesn't mark are rendered at the end.
  */
-const EMBED_MARKER = /^[ \t]*\{\{\s*heatmap\s*\}\}[ \t]*$/mu;
+const EMBED_MARKER = new RegExp(
+  String.raw`^[ \t]*\{\{\s*(${EMBED_NAMES.join("|")})\s*\}\}[ \t]*$`,
+  "gmu",
+);
 
-function splitAtEmbedMarker(content: string): [string, string | null] {
-  const match = EMBED_MARKER.exec(content);
-  if (!match) {
-    return [content, null];
+type RawSegment = { kind: "markdown"; markdown: string } | { kind: "embed"; name: EmbedName };
+
+function splitAtEmbedMarkers(content: string): RawSegment[] {
+  const segments: RawSegment[] = [];
+  let cursor = 0;
+
+  for (const match of content.matchAll(EMBED_MARKER)) {
+    segments.push({ kind: "markdown", markdown: content.slice(cursor, match.index) });
+    segments.push({ kind: "embed", name: match[1] as EmbedName });
+    cursor = match.index + match[0].length;
   }
-  return [content.slice(0, match.index), content.slice(match.index + match[0].length)];
+
+  segments.push({ kind: "markdown", markdown: content.slice(cursor) });
+  return segments.filter(
+    (segment) => segment.kind === "embed" || segment.markdown.trim().length > 0,
+  );
 }
 
 async function renderMarkdown(markdown: string) {
@@ -157,11 +177,16 @@ export async function getContentBySlug(type: ContentType, slug: string) {
 
   const indexEntry = parseIndexEntry(slug, rawFile);
   const { content } = matter(rawFile);
-  const [beforeEmbed, afterEmbed] = splitAtEmbedMarker(content);
+  const segments = await Promise.all(
+    splitAtEmbedMarkers(content).map(async (segment): Promise<ContentSegment> =>
+      segment.kind === "embed"
+        ? segment
+        : { kind: "html", html: await renderMarkdown(segment.markdown) },
+    ),
+  );
 
   return {
     ...indexEntry,
-    contentHtml: await renderMarkdown(beforeEmbed),
-    contentHtmlAfterEmbed: afterEmbed === null ? null : await renderMarkdown(afterEmbed),
+    segments,
   } satisfies ContentEntry;
 }
