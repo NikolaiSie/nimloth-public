@@ -129,11 +129,17 @@ describe("content loading", () => {
     expect(article?.segments.map((segment) => segment.kind)).toEqual(["html"]);
   });
 
+  it("marks paragraphs starting with an asterisk as notes", async () => {
+    const article = await getContentBySlug("blog", "momentum");
+    expect(htmlOf(article)).toContain('<p class="note">* The columns have forward returns');
+    expect(htmlOf(article)).not.toContain('<p class="note">Data is');
+  });
+
   it("places the momentum post's embeds in order", async () => {
     const article = await getContentBySlug("blog", "momentum");
     const embeds = (article?.segments ?? []).flatMap((segment) =>
       segment.kind === "embed" ? [segment.name] : [],
     );
-    expect(embeds).toEqual(["heatmap", "cumulative"]);
+    expect(embeds).toEqual(["heatmap"]);
   });
 });

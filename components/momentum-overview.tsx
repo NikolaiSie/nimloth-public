@@ -44,7 +44,7 @@ export function MomentumOverview({
   );
   const [aggregation, setAggregation] = useState<
     MomentumOverviewPayload["filters"]["aggregation"]
-  >(initialPayload?.filters.aggregation ?? "median");
+  >(initialPayload?.filters.aggregation ?? "weighted_mean");
 
   useEffect(() => {
     let ignore = false;

@@ -15,7 +15,7 @@ const querySchema = z.object({
   date: z.string().optional(),
   country: z.string().default("ALL"),
   cap: z.enum(["ALL", "SC", "MC", "LC"]).default("ALL"),
-  aggregation: z.enum(MOMENTUM_AGGREGATIONS).default("median"),
+  aggregation: z.enum(MOMENTUM_AGGREGATIONS).default("weighted_mean"),
 });
 
 function normalizeDateParam(date: string | undefined) {

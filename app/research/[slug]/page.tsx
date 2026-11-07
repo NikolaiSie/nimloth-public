@@ -66,7 +66,7 @@ export default async function ResearchArticlePage({
     const matrix = await getLatestMomentumMatrix({
       country: "ALL",
       cap: "ALL",
-      aggregation: "median",
+      aggregation: "weighted_mean",
     });
 
     initialPayload = {
@@ -75,7 +75,7 @@ export default async function ResearchArticlePage({
       filters: {
         country: "ALL" as const,
         cap: "ALL" as const,
-        aggregation: "median" as const,
+        aggregation: "weighted_mean" as const,
         date: null,
       },
     };
