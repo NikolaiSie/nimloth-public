@@ -6,6 +6,7 @@ import {
   getMomentumMetadata,
   NimlothApiError,
 } from "@/lib/nimloth-api";
+import { MOMENTUM_AGGREGATIONS } from "@/lib/momentum-aggregations";
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ const querySchema = z.object({
   date: z.string().optional(),
   country: z.string().default("ALL"),
   cap: z.enum(["ALL", "SC", "MC", "LC"]).default("ALL"),
-  aggregation: z.enum(["mean", "median"]).default("median"),
+  aggregation: z.enum(MOMENTUM_AGGREGATIONS).default("median"),
 });
 
 function normalizeDateParam(date: string | undefined) {

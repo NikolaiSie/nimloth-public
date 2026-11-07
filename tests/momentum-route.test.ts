@@ -8,7 +8,7 @@ const metadataPayload = {
   dates: ["2026-09-08", "2026-09-10"],
   countries: ["ALL", "US"],
   caps: ["ALL", "LC"],
-  aggregations: ["mean", "median"],
+  aggregations: ["mean", "median", "weighted_mean"],
   sort_features: ["momentum_1d"],
   target_horizons: ["forward_return_1d", "forward_return_1m"],
 };
@@ -153,5 +153,38 @@ describe("momentum research route", () => {
     );
     expect(payload.filters.date).toBe("2026-09-08");
     expect(payload.matrix.date).toBe("2026-09-08");
+  });
+  it("passes weighted_mean aggregation through to the data API", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => metadataPayload,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...matrixPayload(null),
+          aggregation: "weighted_mean",
+          mode: "latest_available",
+          latest_date: "2026-09-10",
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const GET = await loadRoute();
+    const response = await GET(
+      new NextRequest("https://site.example/api/research/momentum?country=ALL&cap=ALL&aggregation=weighted_mean"),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://data.example.internal/v1/momentum-matrix/latest?country=ALL&cap=ALL&aggregation=weighted_mean",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(payload.filters.aggregation).toBe("weighted_mean");
+    expect(payload.matrix.aggregation).toBe("weighted_mean");
   });
 });
