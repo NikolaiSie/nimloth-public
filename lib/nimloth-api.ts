@@ -209,6 +209,29 @@ export async function getLatestMomentumMatrix(
   )) as MomentumMatrixSlice;
 }
 
+const getCachedHistoricalMomentumMatrix = unstable_cache(
+  async (query: MomentumMatrixQuery) => getMomentumMatrix(query),
+  ["nimloth-momentum-matrix-historical"],
+  {
+    // Past slices only change when a forward return completes, so a long TTL is safe.
+    revalidate: 60 * 60 * 6,
+  },
+);
+
+/**
+ * Historical slice with server-side caching, for widgets that fan out over many
+ * dates (e.g. the cumulative return plotter).
+ */
+export async function getHistoricalMomentumMatrix(
+  query: MomentumMatrixQuery,
+): Promise<MomentumMatrixSlice> {
+  if (process.env.NODE_ENV === "test") {
+    return getMomentumMatrix(query);
+  }
+
+  return (await getCachedHistoricalMomentumMatrix(query)) as MomentumMatrixSlice;
+}
+
 export async function getMomentumMatrix(
   query: MomentumMatrixQuery,
 ): Promise<MomentumMatrixSlice> {

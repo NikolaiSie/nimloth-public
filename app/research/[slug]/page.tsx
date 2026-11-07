@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ArticlePage } from "@/components/article-page";
+import { MomentumCumulative } from "@/components/momentum-cumulative";
 import {
   MomentumOverview,
   type MomentumOverviewPayload,
@@ -83,11 +84,18 @@ export default async function ResearchArticlePage({
   }
 
   return (
-    <ArticlePage article={article} sectionLabel="Blog">
-      <MomentumOverview
-        initialPayload={initialPayload}
-        initialError={initialError}
-      />
-    </ArticlePage>
+    <ArticlePage
+      article={article}
+      sectionLabel="Blog"
+      embeds={{
+        heatmap: (
+          <MomentumOverview
+            initialPayload={initialPayload}
+            initialError={initialError}
+          />
+        ),
+        cumulative: <MomentumCumulative />,
+      }}
+    />
   );
 }
