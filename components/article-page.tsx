@@ -26,6 +26,12 @@ export function ArticlePage({ article, sectionLabel, children }: ArticlePageProp
           dangerouslySetInnerHTML={{ __html: article.contentHtml }}
         />
         {children}
+        {article.contentHtmlAfterEmbed ? (
+          <div
+            className="prose prose--after-embed"
+            dangerouslySetInnerHTML={{ __html: article.contentHtmlAfterEmbed }}
+          />
+        ) : null}
       </article>
     </div>
   );

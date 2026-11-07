@@ -9,8 +9,12 @@ tags:
 featured: true
 ---
 
-Data is the beginning of all systematic trading. Mine comes from FMP, EODHD, Polymarket, and the gracious European Central Bank. These are cheap sources compared to institutional grade systems. The best way to put a new source to work is to build a useful visualization out of it.
+Data is the beginning of all systematic trading. Mine comes from FMP, EODHD, Polymarket, and the gracious European Central Bank. These are cheap sources compared to institutional grade systems, which means they have a lot of bad prints. The most useful way to pressure test a new data source is to start building with it, trace all its errors to their sources, and beat them up until they're perfect. The below momentum heatmap is above all the result of extensive cleaning of retail-grade datasets.
 
-See below the matrix relating past momentum to future performance for any date in all major markets covered in EODHD. The row labels are historical momentum metrics, starting with total return. Further down it shows the ratios of recent to longer moving averages, which is a smoother momentum measure. The columns have forward total returns from the selected date (for the latest date, fwd returns will not be availble, so the returns used are the most recent completed periods of the same length).
+The matrix below relates past momentum to future performance for any date in all major markets. The row labels are historical momentum metrics, starting with total return and contintuing to the ratios of shorter to longer moving averages, which is a smoother momentum measure.
 
-The cells show the mean or median total return of the top 20% of stocks, as ranked by the momentum metric in the row, minus the return of the bottom 20% stocks. Pick a date, market, aggregation method, and company size to see how momentum has performed based on different calculations and over different forward horizons.
+The cells show the mean, median, or weighted (by market cap) mean total return of the top 20% of stocks, as ranked by the momentum metric for the row, minus the return of the bottom 20% stocks.
+
+{{heatmap}}
+
+\* The columns have forward returns from the selected date (for "Latest", fwd returns show the most recently completed periods, mean 1y return is the momentum metric's performance over the past year).
