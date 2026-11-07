@@ -63,4 +63,47 @@ describe("content loading", () => {
       await fs.unlink(filePath).catch(() => undefined);
     }
   });
+
+  it("splits content at the {{heatmap}} embed marker", async () => {
+    const slug = "embed-marker-test";
+    const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
+
+    try {
+      await fs.writeFile(
+        filePath,
+        [
+          "---",
+          "title: Embed marker",
+          "summary: Test fixture",
+          "publishedAt: 2026-07-30",
+          "---",
+          "",
+          "Intro paragraph.",
+          "",
+          "{{heatmap}}",
+          "",
+          "## Below the chart",
+          "",
+          "![Chart](/blog/momentum/chart.png)",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const article = await getContentBySlug("research", slug);
+
+      expect(article?.contentHtml).toContain("Intro paragraph.");
+      expect(article?.contentHtml).not.toContain("Below the chart");
+      expect(article?.contentHtml).not.toContain("{{heatmap}}");
+      expect(article?.contentHtmlAfterEmbed).toContain("<h2>Below the chart</h2>");
+      expect(article?.contentHtmlAfterEmbed).toContain('<img src="/blog/momentum/chart.png" alt="Chart">');
+      expect(article?.contentHtmlAfterEmbed).not.toContain("Intro paragraph.");
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("leaves contentHtmlAfterEmbed null when there is no marker", async () => {
+    const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
+    expect(article?.contentHtmlAfterEmbed).toBeNull();
+  });
 });

@@ -30,8 +30,30 @@ export type ContentIndexEntry = {
 };
 
 export type ContentEntry = ContentIndexEntry & {
+  /** Rendered markdown before the embed marker (or the whole body if there is none). */
   contentHtml: string;
+  /** Rendered markdown after the embed marker, or null when the post has no marker. */
+  contentHtmlAfterEmbed: string | null;
 };
+
+/**
+ * A line containing only `{{heatmap}}` marks where a post's interactive embed
+ * (e.g. the momentum heatmap) is placed. Posts without it get the embed at the end.
+ */
+const EMBED_MARKER = /^[ \t]*\{\{\s*heatmap\s*\}\}[ \t]*$/mu;
+
+function splitAtEmbedMarker(content: string): [string, string | null] {
+  const match = EMBED_MARKER.exec(content);
+  if (!match) {
+    return [content, null];
+  }
+  return [content.slice(0, match.index), content.slice(match.index + match[0].length)];
+}
+
+async function renderMarkdown(markdown: string) {
+  const rendered = await remark().use(html, { sanitize: true }).process(markdown);
+  return rendered.toString();
+}
 
 const contentRoot = path.join(process.cwd(), "content");
 
@@ -135,10 +157,11 @@ export async function getContentBySlug(type: ContentType, slug: string) {
 
   const indexEntry = parseIndexEntry(slug, rawFile);
   const { content } = matter(rawFile);
-  const rendered = await remark().use(html, { sanitize: true }).process(content);
+  const [beforeEmbed, afterEmbed] = splitAtEmbedMarker(content);
 
   return {
     ...indexEntry,
-    contentHtml: rendered.toString(),
+    contentHtml: await renderMarkdown(beforeEmbed),
+    contentHtmlAfterEmbed: afterEmbed === null ? null : await renderMarkdown(afterEmbed),
   } satisfies ContentEntry;
 }

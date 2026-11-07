@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  MOMENTUM_AGGREGATIONS,
+  type MomentumAggregation,
+} from "@/lib/momentum-aggregations";
 import type { MomentumMatrixSlice, MomentumMetadata } from "@/lib/nimloth-api";
 import {
   formatHeatmapValue,
@@ -14,7 +18,7 @@ export type MomentumOverviewPayload = {
   filters: {
     country: string;
     cap: "ALL" | "SC" | "MC" | "LC";
-    aggregation: "mean" | "median";
+    aggregation: MomentumAggregation;
     date: string | null;
   };
 };
@@ -283,9 +287,9 @@ export function MomentumOverview({
                 )
               }
             >
-              {(metadata?.aggregations ?? ["mean", "median"]).map((option) => (
+              {(metadata?.aggregations ?? MOMENTUM_AGGREGATIONS).map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {option.replace(/_/g, " ")}
                 </option>
               ))}
             </select>

@@ -788,6 +788,17 @@ svg {
   margin-bottom: 0.5rem;
 }
 
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 2rem 0;
+}
+
+.prose--after-embed {
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
 .metric-card,
 .banner {
   padding: 1.5rem;

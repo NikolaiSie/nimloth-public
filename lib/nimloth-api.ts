@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
+import { MOMENTUM_AGGREGATIONS, type MomentumAggregation } from "@/lib/momentum-aggregations";
 
 const envSchema = z.object({
   NIMLOTH_DATA_API_BASE_URL: z.string().url().optional(),
@@ -21,7 +22,7 @@ export type MomentumMatrixQuery = {
   date?: string;
   country: string;
   cap: "ALL" | "SC" | "MC" | "LC";
-  aggregation: "mean" | "median";
+  aggregation: MomentumAggregation;
 };
 
 export type MomentumMatrixSlice = {
@@ -63,7 +64,7 @@ const matrixQuerySchema = z.object({
   date: z.string().optional(),
   country: z.string().default("ALL"),
   cap: z.enum(["ALL", "SC", "MC", "LC"]).default("ALL"),
-  aggregation: z.enum(["mean", "median"]).default("mean"),
+  aggregation: z.enum(MOMENTUM_AGGREGATIONS).default("mean"),
 });
 
 const matrixSliceSchema = z.object({
