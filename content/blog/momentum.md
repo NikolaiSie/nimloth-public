@@ -23,7 +23,3 @@ See the cumulative return of the most traditional momentum metric (1 year except
 
 ![Cumulative top-minus-bottom quintile 1-month return for 12-month-ex-1-month momentum, weighted mean, 2016–2026](/blog/momentum/cumulative-12m-ex-1m.png)
 
-Here's a widget to explore the cumulative momentum returns for many signals in most major markets (sorry no India or Japan yet, hold your breath) across cap buckets since 2010.
-
-
-{{cumulative}}

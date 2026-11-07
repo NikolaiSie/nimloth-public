@@ -44,8 +44,7 @@ export type ContentEntry = ContentIndexEntry & {
 
 /**
  * A line containing only `{{name}}` (e.g. `{{heatmap}}`, `{{cumulative}}`) marks
- * where a post's interactive embed is placed. Embeds a page provides but the
- * post doesn't mark are rendered at the end.
+ * where a post's interactive embed is placed. An embed without a marker is not shown.
  */
 const EMBED_MARKER = new RegExp(
   String.raw`^[ \t]*\{\{\s*(${EMBED_NAMES.join("|")})\s*\}\}[ \t]*$`,
@@ -72,7 +71,9 @@ function splitAtEmbedMarkers(content: string): RawSegment[] {
 
 async function renderMarkdown(markdown: string) {
   const rendered = await remark().use(html, { sanitize: true }).process(markdown);
-  return rendered.toString();
+  // Paragraphs starting with "*" (written `\*` in markdown) are footnote-style notes.
+  // The class is added after sanitizing, so it can't be injected from markdown.
+  return rendered.toString().replace(/<p>\*/gu, '<p class="note">*');
 }
 
 const contentRoot = path.join(process.cwd(), "content");

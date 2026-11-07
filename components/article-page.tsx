@@ -4,18 +4,11 @@ import type { ContentEntry, EmbedName } from "@/lib/content";
 type ArticlePageProps = {
   article: ContentEntry;
   sectionLabel: string;
-  /** Interactive embeds, placed where the post's `{{name}}` markers are. */
+  /** Interactive embeds, rendered only where the post has a `{{name}}` marker. */
   embeds?: Partial<Record<EmbedName, ReactNode>>;
 };
 
 export function ArticlePage({ article, sectionLabel, embeds = {} }: ArticlePageProps) {
-  const markedEmbeds = new Set(
-    article.segments.flatMap((segment) => (segment.kind === "embed" ? [segment.name] : [])),
-  );
-  const unmarkedEmbeds = (Object.keys(embeds) as EmbedName[]).filter(
-    (name) => !markedEmbeds.has(name),
-  );
-
   return (
     <div className="container">
       <section className="page-hero article-hero">
@@ -43,9 +36,6 @@ export function ArticlePage({ article, sectionLabel, embeds = {} }: ArticlePageP
             />
           );
         })}
-        {unmarkedEmbeds.map((name) => (
-          <Fragment key={`embed-${name}`}>{embeds[name]}</Fragment>
-        ))}
       </article>
     </div>
   );

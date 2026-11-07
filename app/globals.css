@@ -788,11 +788,29 @@ svg {
   margin-bottom: 0.5rem;
 }
 
+.article {
+  container-type: inline-size;
+}
+
 .prose img {
   display: block;
-  max-width: 100%;
+  /* Charts span the full article width, like the interactive widgets. */
+  width: 100cqi;
+  max-width: none;
   height: auto;
-  margin: 2rem 0;
+  margin: 2.5rem 0;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  /* White plot backgrounds take on the page color instead of showing as a box. */
+  mix-blend-mode: multiply;
+}
+
+.prose p.note {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-style: italic;
+  line-height: 1.7;
 }
 
 .prose--after-embed {
