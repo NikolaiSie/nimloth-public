@@ -75,8 +75,8 @@ describe("labels", () => {
       marketOptions(["ALL", "US", "KR", "XX"], { ALL: "All countries", US: "United States", KR: "South Korea" }),
     ).toEqual([
       { value: "ALL", label: "All countries" },
-      { value: "KR", label: "South Korea (KR)" },
-      { value: "US", label: "United States (US)" },
+      { value: "KR", label: "South Korea" },
+      { value: "US", label: "United States" },
       { value: "XX", label: "XX" },
     ]);
     expect(marketOptions(["ALL"])).toEqual([{ value: "ALL", label: "All countries" }]);
@@ -119,6 +119,19 @@ function seriesPayload(country: string, cap: string, aggregation: string) {
   };
 }
 
+/** A "Latest" slice with one value, so the probed country counts as having data. */
+function latestPayload(country: string) {
+  return {
+    date: null,
+    country,
+    cap: "ALL",
+    aggregation: "weighted_mean",
+    rows: ["momentum_12m_ex_1m"],
+    columns: ["forward_return_1m"],
+    values: [[0.01]],
+  };
+}
+
 describe("cumulative momentum route", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -142,6 +155,9 @@ describe("cumulative momentum route", () => {
         return { ok: true, json: async () => metadataPayload };
       }
       const params = parsed.searchParams;
+      if (parsed.pathname.endsWith("/latest")) {
+        return { ok: true, json: async () => latestPayload(params.get("country") ?? "") };
+      }
       return {
         ok: true,
         json: async () =>
@@ -206,7 +222,9 @@ describe("cumulative momentum route", () => {
       vi.fn(async (url: string) =>
         String(url).includes("/metadata")
           ? { ok: true, json: async () => metadataPayload }
-          : { ok: false, status: 404, text: async () => "Series not found" },
+          : String(url).includes("/latest")
+            ? { ok: true, json: async () => latestPayload(new URL(url).searchParams.get("country") ?? "") }
+            : { ok: false, status: 404, text: async () => "Series not found" },
       ),
     );
     const response = await get("country=US&cap=LC");

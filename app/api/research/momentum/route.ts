@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   getLatestMomentumMatrix,
   getMomentumMatrix,
-  getMomentumMetadata,
+  getMomentumMetadataWithLatestCountries,
   NimlothApiError,
 } from "@/lib/nimloth-api";
 import { MOMENTUM_AGGREGATIONS } from "@/lib/momentum-aggregations";
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   const selectedDate = normalizeDateParam(parsed.date);
 
   try {
-    const metadata = await getMomentumMetadata();
+    const metadata = await getMomentumMetadataWithLatestCountries();
     const rawMatrix = selectedDate
       ? await getMomentumMatrix({
           ...parsed,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  getMomentumMetadata,
+  getMomentumMetadataWithLatestCountries,
   getMomentumSeries,
   NimlothApiError,
 } from "@/lib/nimloth-api";
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   const query = parsed.data;
 
   try {
-    const metadata = await getMomentumMetadata();
+    const metadata = await getMomentumMetadataWithLatestCountries();
     if (metadata.countries.length > 0 && !metadata.countries.includes(query.country)) {
       return badRequest(`Unknown market: ${query.country}.`);
     }

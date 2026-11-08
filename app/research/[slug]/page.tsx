@@ -6,7 +6,7 @@ import {
   type MomentumOverviewPayload,
 } from "@/components/momentum-overview";
 import { getContentBySlug, getContentIndex } from "@/lib/content";
-import { getLatestMomentumMatrix, getMomentumMetadata } from "@/lib/nimloth-api";
+import { getLatestMomentumMatrix, getMomentumMetadataWithLatestCountries } from "@/lib/nimloth-api";
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 type ResearchArticlePageProps = {
@@ -62,7 +62,7 @@ export default async function ResearchArticlePage({
   let initialError: string | null = null;
 
   try {
-    const metadata = await getMomentumMetadata();
+    const metadata = await getMomentumMetadataWithLatestCountries();
     const matrix = await getLatestMomentumMatrix({
       country: "ALL",
       cap: "ALL",

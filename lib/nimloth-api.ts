@@ -212,6 +212,72 @@ export async function getLatestMomentumMatrix(
   )) as MomentumMatrixSlice;
 }
 
+/** True when the country's latest slice (all caps, weighted mean) has at least one value. */
+async function hasLatestData(country: string) {
+  try {
+    const slice = await getLatestMomentumMatrix({ country, cap: "ALL", aggregation: "weighted_mean" });
+    return slice.values.some((row) => row.some((value) => typeof value === "number" && Number.isFinite(value)));
+  } catch (error) {
+    if (error instanceof NimlothApiError && error.status === 404) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Keeps the countries for which `probe` resolves true, in their original order.
+ * "ALL" is always kept. A probe error rejects the whole call, so a partial result
+ * is never cached.
+ */
+export async function filterCountries(
+  countries: string[],
+  probe: (country: string) => Promise<boolean>,
+  concurrency = 8,
+) {
+  const keep = new Map<string, boolean>([["ALL", true]]);
+  const queue = countries.filter((country) => country !== "ALL");
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    for (let country = queue.shift(); country !== undefined; country = queue.shift()) {
+      keep.set(country, await probe(country));
+    }
+  });
+  await Promise.all(workers);
+  return countries.filter((country) => keep.get(country));
+}
+
+const getCachedLatestCountries = unstable_cache(
+  async (countries: string[]) => filterCountries(countries, hasLatestData),
+  ["nimloth-momentum-latest-countries"],
+  {
+    // One probe per country; the latest snapshot changes at most daily.
+    revalidate: 60 * 60,
+  },
+);
+
+/**
+ * Metadata whose country list is limited to countries with data in the
+ * "Latest" heatmap call. Falls back to the full list if the probes fail.
+ */
+export async function getMomentumMetadataWithLatestCountries(): Promise<MomentumMetadata> {
+  const metadata = await getMomentumMetadata();
+  let countries: string[];
+  try {
+    countries =
+      process.env.NODE_ENV === "test"
+        ? await filterCountries(metadata.countries, hasLatestData)
+        : await getCachedLatestCountries(metadata.countries);
+  } catch {
+    return metadata;
+  }
+  const names = metadata.country_names ?? {};
+  return {
+    ...metadata,
+    countries,
+    country_names: Object.fromEntries(countries.map((country) => [country, names[country] ?? null])),
+  };
+}
+
 export type MomentumSeriesQuery = {
   country: string;
   cap: "ALL" | "SC" | "MC" | "LC";

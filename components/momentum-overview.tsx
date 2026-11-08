@@ -11,6 +11,7 @@ import {
   getHeatmapCellStyle,
   getMaxAbsoluteValue,
 } from "@/lib/momentum-heatmap";
+import { marketOptions } from "@/lib/momentum-cumulative";
 
 export type MomentumOverviewPayload = {
   metadata: MomentumMetadata;
@@ -253,11 +254,13 @@ export function MomentumOverview({
               value={country}
               onChange={(event) => setCountry(event.target.value)}
             >
-              {(metadata?.countries ?? ["ALL"]).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
+              {marketOptions(metadata?.countries ?? ["ALL"], metadata?.country_names ?? {}).map(
+                (option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ),
+              )}
             </select>
           </label>
 
@@ -360,17 +363,6 @@ export function MomentumOverview({
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="research-overview__footer">
-              <p>
-                Showing {matrix.rows.length} sort features across{" "}
-                {matrix.columns.length} target horizons for{" "}
-                {matrix.country} / {matrix.cap} / {matrix.aggregation}.
-              </p>
-              <p>
-                Horizons not yet returned by the upstream API are shown as unavailable.
-              </p>
             </div>
           </>
         ) : null}
