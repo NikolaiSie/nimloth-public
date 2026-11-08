@@ -21,7 +21,7 @@ The cells show the mean, median, or weighted (by market cap) mean total return o
 
 See the cumulative return of the most traditional momentum metric (1 year except the latest month; Jegadeesh, 1990). It's a remarkably consistent signal... except for right now. In the time of writing (Nov 7, 2026) we're having a harsh momentum meltdown and a famous hedge fund deleveraging episode. It's not surprising that this strategy works amazingly until it doesn't (Daniel & Moskowitz, 2016). The surprising thing is that people allocate the most capital to it in the sharp run-ups right before the crashes, which means the consistency in the graph far overstates the gains made by investors (Dichev & Yu, 2011). That's the sad truth of all financial markets.
 
-![Cumulative top-minus-bottom quintile 1-month return for 12-month-ex-1-month momentum, weighted mean, 2016–2026](/blog/momentum/cumulative-12m-ex-1m.png)
+Please enjoy this plotting tool that visualizes momentum performance for any signal spec and almost any market.
 
 {{cumulative}}
 
