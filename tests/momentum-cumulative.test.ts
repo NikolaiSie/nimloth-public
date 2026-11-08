@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  annualizedVolatility,
   buildCumulativeSeries,
   formatCapLabel,
   formatSignalLabel,
@@ -57,6 +58,15 @@ describe("monthlyReturnsFromSeries", () => {
 
   it("returns nothing for a signal the series does not publish", () => {
     expect(monthlyReturnsFromSeries(series, "skewness_1y", "2000-01-01")).toEqual([]);
+  });
+});
+
+describe("annualizedVolatility", () => {
+  it("scales the sample standard deviation of monthly returns by the square root of 12", () => {
+    // Sample std of [0.01, 0.03] is √0.0002.
+    expect(annualizedVolatility([0.01, 0.03])).toBeCloseTo(Math.sqrt(0.0002 * 12), 12);
+    expect(annualizedVolatility([0.02])).toBeNull();
+    expect(annualizedVolatility([])).toBeNull();
   });
 });
 

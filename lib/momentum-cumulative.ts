@@ -154,3 +154,14 @@ export function marketOptions(
 export function formatCapLabel(cap: string) {
   return ({ ALL: "All caps", SC: "Small caps", MC: "Mid caps", LC: "Large caps" } as Record<string, string>)[cap] ?? cap;
 }
+
+/** Annualized volatility of monthly returns: sample standard deviation × √12; null below two months. */
+export function annualizedVolatility(monthlyReturns: number[]) {
+  if (monthlyReturns.length < 2) {
+    return null;
+  }
+  const mean = monthlyReturns.reduce((sum, value) => sum + value, 0) / monthlyReturns.length;
+  const variance =
+    monthlyReturns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (monthlyReturns.length - 1);
+  return Math.sqrt(variance * 12);
+}
