@@ -16,6 +16,8 @@ export type MomentumMetadata = {
   aggregations: string[];
   sort_features: string[];
   target_horizons: string[];
+  /** Country code -> English name; absent before the API published names. */
+  country_names?: Record<string, string | null>;
 };
 
 export type MomentumMatrixQuery = {
@@ -58,6 +60,7 @@ const metadataSchema = z.object({
   aggregations: z.array(z.string()).default([]),
   sort_features: z.array(z.string()).default([]),
   target_horizons: z.array(z.string()).default([]),
+  country_names: z.record(z.string(), z.string().nullable()).default({}),
 });
 
 const matrixQuerySchema = z.object({
@@ -209,27 +212,70 @@ export async function getLatestMomentumMatrix(
   )) as MomentumMatrixSlice;
 }
 
-const getCachedHistoricalMomentumMatrix = unstable_cache(
-  async (query: MomentumMatrixQuery) => getMomentumMatrix(query),
-  ["nimloth-momentum-matrix-historical"],
-  {
-    // Past slices only change when a forward return completes, so a long TTL is safe.
-    revalidate: 60 * 60 * 6,
-  },
-);
+export type MomentumSeriesQuery = {
+  country: string;
+  cap: "ALL" | "SC" | "MC" | "LC";
+  aggregation: MomentumAggregation;
+  horizon: string;
+};
 
 /**
- * Historical slice with server-side caching, for widgets that fan out over many
- * dates (e.g. the cumulative return plotter).
+ * Monthly Q5 − Q1 spreads of every signal for one slice and horizon.
+ * `values[i][j]` is the spread of `signals[i]` formed on `dates[j]` (each
+ * month's first trading day) over `target_horizon`; null when unavailable.
  */
-export async function getHistoricalMomentumMatrix(
-  query: MomentumMatrixQuery,
-): Promise<MomentumMatrixSlice> {
-  if (process.env.NODE_ENV === "test") {
-    return getMomentumMatrix(query);
-  }
+export type MomentumSeries = {
+  country: string;
+  country_name?: string | null;
+  cap: string;
+  aggregation: string;
+  target_horizon: string;
+  rebalance?: string;
+  generated_at?: string;
+  dates: string[];
+  signals: string[];
+  values: Array<Array<number | null>>;
+  n_total: Array<Array<number | null>>;
+};
 
-  return (await getCachedHistoricalMomentumMatrix(query)) as MomentumMatrixSlice;
+const seriesSchema = z.object({
+  country: z.string(),
+  country_name: z.string().nullable().optional(),
+  cap: z.string(),
+  aggregation: z.string(),
+  target_horizon: z.string(),
+  rebalance: z.string().optional(),
+  generated_at: z.string().optional(),
+  dates: z.array(z.string()),
+  signals: z.array(z.string()),
+  values: z.array(z.array(z.number().nullable())),
+  n_total: z.array(z.array(z.number().nullable())).default([]),
+});
+
+async function fetchMomentumSeries(query: MomentumSeriesQuery): Promise<MomentumSeries> {
+  const params = new URLSearchParams({
+    country: query.country,
+    cap: query.cap,
+    aggregation: query.aggregation,
+    horizon: query.horizon,
+  });
+  return (await nimlothFetchJson(
+    `/v1/momentum-matrix/series?${params.toString()}`,
+    seriesSchema,
+    { timeoutMs: 8_000 },
+  )) as MomentumSeries;
+}
+
+const getCachedMomentumSeries = unstable_cache(fetchMomentumSeries, ["nimloth-momentum-series"], {
+  // Series are rebuilt by the weekly publish job.
+  revalidate: 60 * 60,
+});
+
+export async function getMomentumSeries(query: MomentumSeriesQuery): Promise<MomentumSeries> {
+  if (process.env.NODE_ENV === "test") {
+    return fetchMomentumSeries(query);
+  }
+  return (await getCachedMomentumSeries(query)) as MomentumSeries;
 }
 
 export async function getMomentumMatrix(

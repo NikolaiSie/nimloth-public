@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { MOMENTUM_AGGREGATIONS, type MomentumAggregation } from "@/lib/momentum-aggregations";
 import {
   CUMULATIVE_DEFAULT_SIGNAL,
   CUMULATIVE_DEFAULT_START,
+  formatCapLabel,
+  formatSignalLabel,
+  marketOptions,
   type CumulativePoint,
 } from "@/lib/momentum-cumulative";
 
@@ -17,10 +20,10 @@ type CumulativePayload = {
     aggregation: MomentumAggregation;
     signal: string;
     start: string;
-    end: string;
   };
   options: {
     countries: string[];
+    countryNames: Record<string, string | null>;
     caps: string[];
     aggregations: string[];
     signals: string[];
@@ -39,8 +42,12 @@ type PlotPoint = {
   period: CumulativePoint | null;
 };
 
-const CHART_HEIGHT = 320;
-const MARGIN = { top: 16, right: 16, bottom: 32, left: 56 };
+const MARGIN = { top: 20, right: 64, bottom: 34, left: 52 };
+const AGGREGATION_LABELS: Record<string, string> = {
+  mean: "Mean",
+  median: "Median",
+  weighted_mean: "Weighted mean",
+};
 
 function toTime(date: string) {
   return Date.parse(`${date}T00:00:00Z`);
@@ -52,24 +59,26 @@ function addOneMonth(date: string) {
   return next.getTime();
 }
 
-function formatPercent(value: number, digits = 1) {
-  return `${(value * 100).toFixed(digits)}%`;
+function formatPercent(value: number, digits = 1, signed = false) {
+  const text = `${(value * 100).toFixed(digits)}%`;
+  return signed && value > 0 ? `+${text}` : text;
 }
 
-function formatDate(time: number) {
+function formatMonth(time: number) {
+  return new Date(time).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+function formatDay(time: number) {
   return new Date(time).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
     timeZone: "UTC",
   });
-}
-
-function formatSignal(value: string) {
-  return value
-    .replace("momentum_", "")
-    .replace("ma_", "ma ")
-    .replaceAll("_", " ");
 }
 
 function niceStep(range: number, targetTicks: number) {
@@ -110,15 +119,15 @@ export function MomentumCumulative() {
   const [payload, setPayload] = useState<CumulativePayload | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [start, setStart] = useState(CUMULATIVE_DEFAULT_START);
   const [country, setCountry] = useState("ALL");
   const [cap, setCap] = useState<Cap>("ALL");
-  const [aggregation, setAggregation] = useState<MomentumAggregation>("weighted_mean");
   const [signal, setSignal] = useState(CUMULATIVE_DEFAULT_SIGNAL);
-  const [start, setStart] = useState(CUMULATIVE_DEFAULT_START);
-  const [end, setEnd] = useState("");
-  const [width, setWidth] = useState(720);
+  const [aggregation, setAggregation] = useState<MomentumAggregation>("weighted_mean");
+  const [width, setWidth] = useState(760);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const gradientId = useId().replace(/:/g, "");
 
   useEffect(() => {
     const element = chartRef.current;
@@ -135,14 +144,11 @@ export function MomentumCumulative() {
   useEffect(() => {
     let ignore = false;
     const params = new URLSearchParams({ country, cap, aggregation, signal, start });
-    if (end) {
-      params.set("end", end);
-    }
 
     setIsLoading(true);
     setErrorMessage(null);
 
-    fetch(`/api/research/momentum/cumulative?${params.toString()}`, { cache: "no-store" })
+    fetch(`/api/research/momentum/cumulative?${params.toString()}`)
       .then(async (response) => {
         const data = (await response.json()) as CumulativePayload | { message?: string };
         if (!response.ok) {
@@ -173,9 +179,10 @@ export function MomentumCumulative() {
     return () => {
       ignore = true;
     };
-  }, [aggregation, cap, country, end, signal, start]);
+  }, [aggregation, cap, country, signal, start]);
 
   const plotPoints = useMemo(() => buildPlotPoints(payload?.points ?? []), [payload]);
+  const height = width < 520 ? 260 : 340;
 
   const chart = useMemo(() => {
     if (plotPoints.length < 2) {
@@ -183,19 +190,18 @@ export function MomentumCumulative() {
     }
 
     const innerWidth = width - MARGIN.left - MARGIN.right;
-    const innerHeight = CHART_HEIGHT - MARGIN.top - MARGIN.bottom;
+    const innerHeight = height - MARGIN.top - MARGIN.bottom;
     const xMin = plotPoints[0].x;
     const xMax = plotPoints[plotPoints.length - 1].x;
     const values = plotPoints.map((point) => point.cumulative);
     const rawMin = Math.min(0, ...values);
     const rawMax = Math.max(0, ...values);
-    const step = niceStep(rawMax - rawMin || 0.1, 5);
+    const step = niceStep(rawMax - rawMin || 0.1, height < 300 ? 4 : 5);
     const yMin = Math.floor(rawMin / step) * step;
     const yMax = Math.ceil(rawMax / step) * step;
 
     const xScale = (x: number) => MARGIN.left + ((x - xMin) / (xMax - xMin || 1)) * innerWidth;
-    const yScale = (y: number) =>
-      MARGIN.top + (1 - (y - yMin) / (yMax - yMin || 1)) * innerHeight;
+    const yScale = (y: number) => MARGIN.top + (1 - (y - yMin) / (yMax - yMin || 1)) * innerHeight;
 
     const yTicks: number[] = [];
     for (let tick = yMin; tick <= yMax + step / 2; tick += step) {
@@ -204,25 +210,25 @@ export function MomentumCumulative() {
 
     const firstYear = new Date(xMin).getUTCFullYear();
     const lastYear = new Date(xMax).getUTCFullYear();
-    const yearSpan = lastYear - firstYear + 1;
-    const maxLabels = Math.max(2, Math.floor(innerWidth / 56));
-    const yearStep = Math.max(1, Math.ceil(yearSpan / maxLabels));
+    const maxLabels = Math.max(2, Math.floor(innerWidth / (innerWidth < 400 ? 44 : 58)));
+    const yearStep = Math.max(1, Math.ceil((lastYear - firstYear + 1) / maxLabels));
     const xTicks: number[] = [];
-    for (let year = firstYear; year <= lastYear + 1; year += yearStep) {
+    // Ticks land on round years (multiples of the step), e.g. 2015, 2020, 2025.
+    for (let year = Math.ceil(firstYear / yearStep) * yearStep; year <= lastYear + 1; year += yearStep) {
       const time = Date.UTC(year, 0, 1);
       if (time >= xMin && time <= xMax) {
         xTicks.push(time);
       }
     }
 
-    const path = plotPoints
-      .map((point, index) =>
-        `${index === 0 ? "M" : "L"}${xScale(point.x).toFixed(1)},${yScale(point.cumulative).toFixed(1)}`,
-      )
+    const line = plotPoints
+      .map((point, index) => `${index === 0 ? "M" : "L"}${xScale(point.x).toFixed(1)},${yScale(point.cumulative).toFixed(1)}`)
       .join("");
+    const zeroY = yScale(0);
+    const area = `${line}L${xScale(xMax).toFixed(1)},${zeroY.toFixed(1)}L${xScale(xMin).toFixed(1)},${zeroY.toFixed(1)}Z`;
 
-    return { innerWidth, innerHeight, xScale, yScale, yTicks, xTicks, path, step };
-  }, [plotPoints, width]);
+    return { innerWidth, innerHeight, xScale, yScale, yTicks, xTicks, line, area, zeroY, step };
+  }, [height, plotPoints, width]);
 
   function handlePointerMove(event: React.PointerEvent<SVGRectElement>) {
     if (!chart) {
@@ -243,31 +249,30 @@ export function MomentumCumulative() {
   }
 
   const options = payload?.options;
+  const markets = marketOptions(options?.countries ?? ["ALL"], options?.countryNames ?? {});
+  const signals = options?.signals.length ? options.signals : [signal];
   const finalPoint = plotPoints.at(-1);
   const years =
-    plotPoints.length > 1
-      ? (plotPoints[plotPoints.length - 1].x - plotPoints[0].x) / (365.25 * 86_400_000)
-      : 0;
-  const annualized =
-    finalPoint && years > 0 ? (1 + finalPoint.cumulative) ** (1 / years) - 1 : null;
+    plotPoints.length > 1 ? (plotPoints[plotPoints.length - 1].x - plotPoints[0].x) / (365.25 * 86_400_000) : 0;
+  const annualized = finalPoint && years > 0 ? (1 + finalPoint.cumulative) ** (1 / years) - 1 : null;
   const drawdown = plotPoints.length > 1 ? maxDrawdown(plotPoints) : null;
   const hovered = hoverIndex !== null ? plotPoints[hoverIndex] : null;
-  const tooltipLeft =
-    hovered && chart ? Math.min(Math.max(chart.xScale(hovered.x), 90), width - 90) : 0;
+  const tooltipLeft = hovered && chart ? Math.min(Math.max(chart.xScale(hovered.x), 96), width - 96) : 0;
+  const marketLabel = markets.find((option) => option.value === country)?.label ?? country;
 
   return (
     <section className="section" id="momentum-cumulative">
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>
-            <h2>Cumulative momentum returns</h2>
+            <h2>Cumulative returns</h2>
           </div>
           <div className="research-overview__meta">
             {finalPoint ? (
               <>
-                <span className="tag">Total {formatPercent(finalPoint.cumulative)}</span>
+                <span className="tag">Total {formatPercent(finalPoint.cumulative, 1, true)}</span>
                 {annualized !== null ? (
-                  <span className="tag">Annualized {formatPercent(annualized)}</span>
+                  <span className="tag">Annualized {formatPercent(annualized, 1, true)}</span>
                 ) : null}
                 {drawdown !== null ? (
                   <span className="tag">Max drawdown {formatPercent(drawdown)}</span>
@@ -277,13 +282,28 @@ export function MomentumCumulative() {
           </div>
         </div>
 
-        <div className="research-filters research-filters--six">
+        <div className="research-filters research-filters--five">
+          <label className="research-filter">
+            <span>Start date</span>
+            <input
+              type="date"
+              value={start}
+              min={options?.firstDate ?? undefined}
+              max={options?.lastDate ?? undefined}
+              onChange={(event) => {
+                if (event.target.value) {
+                  setStart(event.target.value);
+                }
+              }}
+            />
+          </label>
+
           <label className="research-filter">
             <span>Market</span>
             <select value={country} onChange={(event) => setCountry(event.target.value)}>
-              {(options?.countries.length ? options.countries : ["ALL"]).map((option) => (
-                <option key={option} value={option}>
-                  {option}
+              {markets.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -294,18 +314,18 @@ export function MomentumCumulative() {
             <select value={cap} onChange={(event) => setCap(event.target.value as Cap)}>
               {(options?.caps.length ? options.caps : ["ALL", "SC", "MC", "LC"]).map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {formatCapLabel(option)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="research-filter">
-            <span>Momentum signal</span>
+            <span>Signal</span>
             <select value={signal} onChange={(event) => setSignal(event.target.value)}>
-              {(options?.signals.length ? options.signals : [signal]).map((option) => (
+              {signals.map((option) => (
                 <option key={option} value={option}>
-                  {formatSignal(option)}
+                  {formatSignalLabel(option)}
                 </option>
               ))}
             </select>
@@ -317,40 +337,12 @@ export function MomentumCumulative() {
               value={aggregation}
               onChange={(event) => setAggregation(event.target.value as MomentumAggregation)}
             >
-              {(options?.aggregations.length ? options.aggregations : MOMENTUM_AGGREGATIONS).map(
-                (option) => (
-                  <option key={option} value={option}>
-                    {option.replace(/_/g, " ")}
-                  </option>
-                ),
-              )}
+              {(options?.aggregations.length ? options.aggregations : MOMENTUM_AGGREGATIONS).map((option) => (
+                <option key={option} value={option}>
+                  {AGGREGATION_LABELS[option] ?? option.replace(/_/g, " ")}
+                </option>
+              ))}
             </select>
-          </label>
-
-          <label className="research-filter">
-            <span>Start</span>
-            <input
-              type="date"
-              value={start}
-              min={options?.firstDate ?? undefined}
-              max={end || options?.lastDate || undefined}
-              onChange={(event) => {
-                if (event.target.value) {
-                  setStart(event.target.value);
-                }
-              }}
-            />
-          </label>
-
-          <label className="research-filter">
-            <span>End</span>
-            <input
-              type="date"
-              value={end || payload?.filters.end || ""}
-              min={start}
-              max={options?.lastDate ?? undefined}
-              onChange={(event) => setEnd(event.target.value)}
-            />
           </label>
         </div>
 
@@ -366,26 +358,45 @@ export function MomentumCumulative() {
           ref={chartRef}
           aria-busy={isLoading}
         >
-          {chart ? (
+          {chart && finalPoint ? (
             <svg
               width={width}
-              height={CHART_HEIGHT}
-              viewBox={`0 0 ${width} ${CHART_HEIGHT}`}
+              height={height}
+              viewBox={`0 0 ${width} ${height}`}
               role="img"
-              aria-label={`Cumulative Q5 minus Q1 return for ${formatSignal(signal)}, ${country} / ${cap} / ${aggregation.replace(/_/g, " ")}${finalPoint ? `: ${formatPercent(finalPoint.cumulative)} in total` : ""}.`}
+              aria-label={`Cumulative top-minus-bottom quintile return of ${formatSignalLabel(signal)}, ${marketLabel}, ${formatCapLabel(cap).toLowerCase()}, ${(AGGREGATION_LABELS[aggregation] ?? aggregation).toLowerCase()}: ${formatPercent(finalPoint.cumulative)} in total.`}
             >
+              <defs>
+                <linearGradient id={`${gradientId}-up`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--sea)" stopOpacity="0.26" />
+                  <stop offset="100%" stopColor="var(--sea)" stopOpacity="0.02" />
+                </linearGradient>
+                <linearGradient id={`${gradientId}-down`} x1="0" x2="0" y1="1" y2="0">
+                  <stop offset="0%" stopColor="var(--bronze)" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="var(--bronze)" stopOpacity="0.03" />
+                </linearGradient>
+                <clipPath id={`${gradientId}-above`}>
+                  <rect x={0} y={0} width={width} height={chart.zeroY} />
+                </clipPath>
+                <clipPath id={`${gradientId}-below`}>
+                  <rect x={0} y={chart.zeroY} width={width} height={height - chart.zeroY} />
+                </clipPath>
+              </defs>
+
               {chart.yTicks.map((tick) => (
                 <g key={tick}>
-                  <line
-                    className={tick === 0 ? "cumulative-chart__zero" : "cumulative-chart__grid"}
-                    x1={MARGIN.left}
-                    x2={width - MARGIN.right}
-                    y1={chart.yScale(tick)}
-                    y2={chart.yScale(tick)}
-                  />
+                  {tick !== 0 ? (
+                    <line
+                      className="cumulative-chart__grid"
+                      x1={MARGIN.left}
+                      x2={width - MARGIN.right}
+                      y1={chart.yScale(tick)}
+                      y2={chart.yScale(tick)}
+                    />
+                  ) : null}
                   <text
                     className="cumulative-chart__label"
-                    x={MARGIN.left - 8}
+                    x={MARGIN.left - 10}
                     y={chart.yScale(tick)}
                     dy="0.32em"
                     textAnchor="end"
@@ -395,17 +406,63 @@ export function MomentumCumulative() {
                 </g>
               ))}
               {chart.xTicks.map((tick) => (
-                <text
-                  className="cumulative-chart__label"
-                  key={tick}
-                  x={chart.xScale(tick)}
-                  y={CHART_HEIGHT - 8}
-                  textAnchor="middle"
-                >
-                  {new Date(tick).getUTCFullYear()}
-                </text>
+                <g key={tick}>
+                  <line
+                    className="cumulative-chart__tick"
+                    x1={chart.xScale(tick)}
+                    x2={chart.xScale(tick)}
+                    y1={height - MARGIN.bottom}
+                    y2={height - MARGIN.bottom + 5}
+                  />
+                  <text
+                    className="cumulative-chart__label"
+                    x={chart.xScale(tick)}
+                    y={height - 10}
+                    textAnchor="middle"
+                  >
+                    {new Date(tick).getUTCFullYear()}
+                  </text>
+                </g>
               ))}
-              <path className="cumulative-chart__line" d={chart.path} />
+              <line
+                className="cumulative-chart__axis"
+                x1={MARGIN.left}
+                x2={width - MARGIN.right}
+                y1={height - MARGIN.bottom}
+                y2={height - MARGIN.bottom}
+              />
+
+              <path className="cumulative-chart__area" d={chart.area} fill={`url(#${gradientId}-up)`} clipPath={`url(#${gradientId}-above)`} />
+              <path className="cumulative-chart__area" d={chart.area} fill={`url(#${gradientId}-down)`} clipPath={`url(#${gradientId}-below)`} />
+              <line
+                className="cumulative-chart__zero"
+                x1={MARGIN.left}
+                x2={width - MARGIN.right}
+                y1={chart.zeroY}
+                y2={chart.zeroY}
+              />
+              <path className="cumulative-chart__line" d={chart.line} clipPath={`url(#${gradientId}-above)`} />
+              <path
+                className="cumulative-chart__line cumulative-chart__line--negative"
+                d={chart.line}
+                clipPath={`url(#${gradientId}-below)`}
+              />
+
+              <circle
+                className="cumulative-chart__end"
+                cx={chart.xScale(finalPoint.x)}
+                cy={chart.yScale(finalPoint.cumulative)}
+                r={4}
+              />
+              <text
+                className="cumulative-chart__end-label"
+                x={chart.xScale(finalPoint.x) + 9}
+                y={chart.yScale(finalPoint.cumulative)}
+                dy="0.32em"
+              >
+                {formatPercent(finalPoint.cumulative, 0, true)}
+              </text>
+
               {hovered ? (
                 <g>
                   <line
@@ -413,7 +470,7 @@ export function MomentumCumulative() {
                     x1={chart.xScale(hovered.x)}
                     x2={chart.xScale(hovered.x)}
                     y1={MARGIN.top}
-                    y2={CHART_HEIGHT - MARGIN.bottom}
+                    y2={height - MARGIN.bottom}
                   />
                   <circle
                     className="cumulative-chart__marker"
@@ -435,18 +492,18 @@ export function MomentumCumulative() {
               />
             </svg>
           ) : (
-            <div className="cumulative-chart__empty" style={{ height: CHART_HEIGHT }}>
-              {isLoading ? "Loading monthly returns…" : "No completed months in this range."}
+            <div className="cumulative-chart__empty" style={{ height }}>
+              {isLoading ? "Loading monthly returns…" : "No completed months from this start date."}
             </div>
           )}
           {hovered && chart ? (
             <div className="cumulative-chart__tooltip" style={{ left: tooltipLeft }}>
-              <p className="cumulative-chart__tooltip-title">{formatDate(hovered.x)}</p>
-              <p>Cumulative: {formatPercent(hovered.cumulative)}</p>
+              <p className="cumulative-chart__tooltip-title">{formatMonth(hovered.x)}</p>
+              <p>Cumulative {formatPercent(hovered.cumulative, 1, true)}</p>
               {hovered.period ? (
                 <>
-                  <p>Rebalanced: {formatDate(toTime(hovered.period.date))}</p>
-                  <p>Month Q5 − Q1: {formatPercent(hovered.period.spread, 2)}</p>
+                  <p>Month Q5 − Q1 {formatPercent(hovered.period.spread, 2, true)}</p>
+                  <p>Formed {formatDay(toTime(hovered.period.date))}</p>
                 </>
               ) : (
                 <p>Start of strategy</p>
@@ -457,8 +514,8 @@ export function MomentumCumulative() {
 
         <div className="research-overview__footer">
           <p>
-            Rebalanced on the first trading date of each month: long the top 20% of stocks by the
-            selected signal, short the bottom 20%, held for one month, compounded.
+            Formed on the first trading day of each month: long the top 20% of stocks by the selected
+            signal, short the bottom 20%, held one month and compounded. Before costs.
           </p>
           <p>
             {payload?.skippedDates.length

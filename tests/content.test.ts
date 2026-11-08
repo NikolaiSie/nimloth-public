@@ -140,6 +140,13 @@ describe("content loading", () => {
     const embeds = (article?.segments ?? []).flatMap((segment) =>
       segment.kind === "embed" ? [segment.name] : [],
     );
-    expect(embeds).toEqual(["heatmap"]);
+    expect(embeds).toEqual(["heatmap", "cumulative"]);
+
+    // The cumulative plotter sits directly above the references.
+    const segments = article?.segments ?? [];
+    const plotter = segments.findIndex((segment) => segment.kind === "embed" && segment.name === "cumulative");
+    const after = segments[plotter + 1];
+    expect(after?.kind === "html" && after.html.trimStart().startsWith("<h2")).toBe(true);
+    expect(after?.kind === "html" && after.html).toContain("References");
   });
 });

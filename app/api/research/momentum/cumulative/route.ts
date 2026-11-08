@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  getHistoricalMomentumMatrix,
   getMomentumMetadata,
+  getMomentumSeries,
   NimlothApiError,
-  type MomentumMatrixSlice,
 } from "@/lib/nimloth-api";
 import { MOMENTUM_AGGREGATIONS } from "@/lib/momentum-aggregations";
 import {
@@ -13,8 +12,7 @@ import {
   CUMULATIVE_DEFAULT_START,
   CUMULATIVE_HORIZON,
   isPublicSortFeature,
-  pickMonthlyRebalanceDates,
-  type MonthlyReturn,
+  monthlyReturnsFromSeries,
 } from "@/lib/momentum-cumulative";
 
 export const dynamic = "force-dynamic";
@@ -27,39 +25,7 @@ const querySchema = z.object({
   aggregation: z.enum(MOMENTUM_AGGREGATIONS).default("weighted_mean"),
   signal: z.string().default(CUMULATIVE_DEFAULT_SIGNAL),
   start: isoDate.default(CUMULATIVE_DEFAULT_START),
-  end: isoDate.optional(),
 });
-
-const FETCH_CONCURRENCY = 8;
-
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T) => Promise<R>,
-) {
-  const results = new Array<R>(items.length);
-  let next = 0;
-
-  async function run() {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await worker(items[index]);
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
-  return results;
-}
-
-function readSpread(slice: MomentumMatrixSlice, signal: string) {
-  const rowIndex = slice.rows.indexOf(signal);
-  const columnIndex = slice.columns.indexOf(CUMULATIVE_HORIZON);
-  if (rowIndex < 0 || columnIndex < 0) {
-    return null;
-  }
-  const value = slice.values[rowIndex]?.[columnIndex];
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
 
 function badRequest(message: string) {
   return NextResponse.json({ message }, { status: 400 });
@@ -67,22 +33,28 @@ function badRequest(message: string) {
 
 function toErrorResponse(error: unknown) {
   if (error instanceof NimlothApiError && error.status === 401) {
+    return NextResponse.json({ message: "Momentum API authentication failed." }, { status: 502 });
+  }
+  if (error instanceof NimlothApiError && error.status === 404) {
     return NextResponse.json(
-      { message: "Momentum API authentication failed." },
-      { status: 502 },
+      { message: "No monthly returns are published for that market and cap bucket." },
+      { status: 404 },
     );
   }
-
   return NextResponse.json(
     { message: "The cumulative momentum data could not be loaded." },
     { status: 503 },
   );
 }
 
+/**
+ * One data-API request per filter change: the monthly series for the selected
+ * market, cap bucket and aggregation, from which the chosen signal is compounded.
+ */
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse(
     Object.fromEntries(
-      ["country", "cap", "aggregation", "signal", "start", "end"].flatMap((key) => {
+      ["country", "cap", "aggregation", "signal", "start"].flatMap((key) => {
         const value = request.nextUrl.searchParams.get(key);
         return value ? [[key, value]] : [];
       }),
@@ -97,58 +69,38 @@ export async function GET(request: NextRequest) {
 
   try {
     const metadata = await getMomentumMetadata();
-    const signals = metadata.sort_features.filter(isPublicSortFeature);
-
     if (metadata.countries.length > 0 && !metadata.countries.includes(query.country)) {
       return badRequest(`Unknown market: ${query.country}.`);
     }
-    if (signals.length > 0 && !signals.includes(query.signal)) {
+
+    const series = await getMomentumSeries({
+      country: query.country,
+      cap: query.cap,
+      aggregation: query.aggregation,
+      horizon: CUMULATIVE_HORIZON,
+    });
+    const signals = series.signals.filter(isPublicSortFeature);
+    if (!signals.includes(query.signal)) {
       return badRequest(`Unknown momentum signal: ${query.signal}.`);
     }
 
-    const sortedDates = [...metadata.dates].sort();
-    const end = query.end ?? metadata.latest_date ?? sortedDates.at(-1) ?? query.start;
-    if (end < query.start) {
-      return badRequest("The end date must be after the start date.");
-    }
-
-    const rebalanceDates = pickMonthlyRebalanceDates(sortedDates, query.start, end);
-    const monthly = await mapWithConcurrency(
-      rebalanceDates,
-      FETCH_CONCURRENCY,
-      async (date): Promise<MonthlyReturn> => {
-        try {
-          const slice = await getHistoricalMomentumMatrix({
-            date,
-            country: query.country,
-            cap: query.cap,
-            aggregation: query.aggregation,
-          });
-          return { date, spread: readSpread(slice, query.signal) };
-        } catch (error) {
-          // A single missing slice becomes a gap; anything else fails the request.
-          if (error instanceof NimlothApiError && error.status === 404) {
-            return { date, spread: null };
-          }
-          throw error;
-        }
-      },
+    const cumulative = buildCumulativeSeries(
+      monthlyReturnsFromSeries(series, query.signal, query.start),
     );
 
-    const series = buildCumulativeSeries(monthly);
-
     return NextResponse.json({
-      filters: { ...query, end },
+      filters: query,
       options: {
         countries: metadata.countries,
+        countryNames: metadata.country_names ?? {},
         caps: metadata.caps,
         aggregations: metadata.aggregations,
         signals,
-        firstDate: sortedDates[0] ?? null,
-        lastDate: metadata.latest_date ?? sortedDates.at(-1) ?? null,
+        firstDate: series.dates[0] ?? null,
+        lastDate: series.dates.at(-1) ?? null,
       },
-      points: series.points,
-      skippedDates: series.skippedDates,
+      points: cumulative.points,
+      skippedDates: cumulative.skippedDates,
     });
   } catch (error) {
     return toErrorResponse(error);
