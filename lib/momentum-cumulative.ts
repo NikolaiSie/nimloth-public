@@ -132,7 +132,7 @@ export function formatSignalLabel(signal: string) {
 
 export type MarketOption = { value: string; label: string };
 
-/** Markets for the picker: all countries first, then by name, labelled "Name (CODE)". */
+/** Markets for the picker: all countries first, then by name; the code is shown only when no name is known. */
 export function marketOptions(
   countries: string[],
   names: Record<string, string | null | undefined> = {},
@@ -141,8 +141,7 @@ export function marketOptions(
     if (code === "ALL") {
       return names.ALL ?? "All countries";
     }
-    const name = names[code];
-    return name ? `${name} (${code})` : code;
+    return names[code] ?? code;
   };
   const rest = countries
     .filter((code) => code !== "ALL")

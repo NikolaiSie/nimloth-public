@@ -512,17 +512,6 @@ export function MomentumCumulative() {
           ) : null}
         </div>
 
-        <div className="research-overview__footer">
-          <p>
-            Formed on the first trading day of each month: long the top 20% of stocks by the selected
-            signal, short the bottom 20%, held one month and compounded. Before costs.
-          </p>
-          <p>
-            {payload?.skippedDates.length
-              ? `${payload.skippedDates.length} month(s) without data were held flat.`
-              : "The latest month appears once its 1-month forward return has completed."}
-          </p>
-        </div>
       </div>
     </section>
   );
