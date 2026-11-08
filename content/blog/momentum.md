@@ -9,7 +9,7 @@ tags:
 featured: true
 ---
 
-Data is the beginning of all systematic trading. Mine comes from FMP, EODHD, Polymarket, and the gracious European Central Bank. These are cheap sources compared to institutional grade systems, which means they have a lot of bad prints (Ince & Porter, 2006). The most useful way to pressure test a new data source is to start building with it, trace all its errors to their sources, and beat them up until they're perfect. The below momentum heatmap is above all the result of extensive cleaning of retail-grade datasets.
+Data is the beginning of all systematic trading. Mine comes from FMP, EODHD, Polymarket, and the gracious European Central Bank. These are cheap sources compared to institutional grade systems, which means they have a lot of bad prints (Ince & Porter, 2006). The most useful way to pressure test a new data source is to start building with it, trace all its errors to their sources, and beat them up until they're perfect. The below momentum heatmap is first and foremost the result of extensive cleaning of retail-grade datasets.
 
 The matrix below relates past momentum to future performance for any date in all major markets. The row labels are historical momentum metrics, starting with total return and contintuing to the ratios of shorter to longer moving averages, which is a smoother momentum measure (Han, Zhou & Zhu, 2016).
 

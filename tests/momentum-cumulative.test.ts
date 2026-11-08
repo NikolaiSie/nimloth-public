@@ -47,13 +47,22 @@ describe("monthlyReturnsFromSeries", () => {
       [0.5, 0.5, 0.5],
       [0.2, 0.1, null],
     ],
+    n_total: [
+      [900, 1000, 1100],
+      [800, 950, null],
+    ],
   };
 
-  it("reads one signal's spreads from the start date on", () => {
+  it("reads one signal's spreads and observation counts from the start date on", () => {
     expect(monthlyReturnsFromSeries(series, "momentum_12m_ex_1m", "2010-01-01")).toEqual([
-      { date: "2010-01-04", spread: 0.1 },
-      { date: "2010-02-01", spread: null },
+      { date: "2010-01-04", spread: 0.1, observations: 950 },
+      { date: "2010-02-01", spread: null, observations: null },
     ]);
+  });
+
+  it("carries observation counts onto the compounded points", () => {
+    const { points } = buildCumulativeSeries(monthlyReturnsFromSeries(series, "momentum_1m", "2009-01-01"));
+    expect(points.map((point) => point.observations)).toEqual([900, 1000, 1100]);
   });
 
   it("returns nothing for a signal the series does not publish", () => {

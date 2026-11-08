@@ -203,7 +203,7 @@ export function MomentumOverview({
       <div className="research-overview card">
         <div className="research-overview__header">
           <div>
-            <h2>Global stock momentum snapshot</h2>
+            <h2>Momentum heatmap</h2>
           </div>
           <div className="research-overview__meta">
             {matrix ? (

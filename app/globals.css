@@ -1108,6 +1108,27 @@ svg {
   stroke-width: 2;
 }
 
+/* Observations panel: quiet bars under the return line, same hue, lighter. */
+.cumulative-chart__bar {
+  fill: var(--sea-pale);
+  opacity: 0.75;
+  transition: opacity 120ms ease;
+}
+
+.cumulative-chart__bar--active {
+  fill: var(--sea);
+  opacity: 1;
+}
+
+.cumulative-chart__panel-label {
+  fill: var(--muted);
+  font-family: var(--ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .cumulative-chart__empty {
   display: grid;
   place-items: center;

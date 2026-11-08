@@ -17,6 +17,8 @@ export type MonthlyReturn = {
   date: string;
   /** 1-month forward Q5 − Q1 spread from this date, or null if unavailable. */
   spread: number | null;
+  /** Stocks ranked on this date (the API's n_total), or null if unpublished. */
+  observations?: number | null;
 };
 
 export type CumulativePoint = {
@@ -26,6 +28,8 @@ export type CumulativePoint = {
   spread: number;
   /** Compounded return through the end of this period. */
   cumulative: number;
+  /** Stocks ranked on `date`, or null if unpublished. */
+  observations: number | null;
 };
 
 export type CumulativeSeries = {
@@ -36,7 +40,7 @@ export type CumulativeSeries = {
 
 /** Monthly spreads of one signal from `start` on; empty if the signal is absent. */
 export function monthlyReturnsFromSeries(
-  series: Pick<MomentumSeries, "dates" | "signals" | "values">,
+  series: Pick<MomentumSeries, "dates" | "signals" | "values"> & Partial<Pick<MomentumSeries, "n_total">>,
   signal: string,
   start: string,
 ): MonthlyReturn[] {
@@ -45,12 +49,14 @@ export function monthlyReturnsFromSeries(
     return [];
   }
   const values = series.values[row] ?? [];
+  const counts = series.n_total?.[row] ?? [];
+  const finite = (value: number | null | undefined) =>
+    typeof value === "number" && Number.isFinite(value) ? value : null;
   return series.dates.flatMap((date, index) => {
     if (date < start) {
       return [];
     }
-    const value = values[index];
-    return [{ date, spread: typeof value === "number" && Number.isFinite(value) ? value : null }];
+    return [{ date, spread: finite(values[index]), observations: finite(counts[index]) }];
   });
 }
 
@@ -81,7 +87,12 @@ export function buildCumulativeSeries(monthly: MonthlyReturn[]): CumulativeSerie
     }
 
     growth *= 1 + entry.spread;
-    points.push({ date: entry.date, spread: entry.spread, cumulative: growth - 1 });
+    points.push({
+      date: entry.date,
+      spread: entry.spread,
+      cumulative: growth - 1,
+      observations: entry.observations ?? null,
+    });
   }
 
   return { points, skippedDates };
