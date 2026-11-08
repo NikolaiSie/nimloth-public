@@ -1517,28 +1517,55 @@ svg {
     border-bottom: 0;
   }
 
+  /* The heatmap keeps readable cells and scrolls sideways; metric names stay pinned. */
+  .heatmap-shell {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .heatmap-grid {
+    width: max-content;
+    min-width: 100%;
     gap: 1px;
-    grid-template-columns: minmax(5.1rem, 1.5fr) repeat(13, minmax(0, 1fr));
+    grid-template-columns: 6.6rem repeat(13, minmax(3.7rem, 1fr));
   }
 
   .heatmap-corner,
   .heatmap-column-label {
-    min-height: 2.8rem;
-    padding: 0.3rem 0.05rem;
-    font-size: 0.5rem;
-    letter-spacing: -0.01em;
+    min-height: 3rem;
+    padding: 0.35rem 0.15rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+  }
+
+  .heatmap-corner,
+  .heatmap-row-label {
+    position: sticky;
+    z-index: 3;
+    left: 0;
+    /* Opaque so scrolled cells don't show through the pinned column. */
+    background:
+      linear-gradient(rgba(197, 208, 209, 0.32), rgba(197, 208, 209, 0.32)),
+      var(--stone-light);
+    box-shadow: 1px 0 0 var(--border);
   }
 
   .heatmap-row-label {
-    padding: 0.35rem 0.25rem;
-    font-size: 0.6rem;
+    padding: 0.4rem 0.45rem;
+    font-size: 0.72rem;
   }
 
   .heatmap-cell {
-    min-height: 2.4rem;
-    padding: 0.2rem 0;
-    font-size: 0.53rem;
+    min-height: 2.8rem;
+    padding: 0.2rem 0.1rem;
+    font-size: 0.74rem;
+  }
+
+  /* No zoom on tap: a transform would trap the fixed tooltip inside the scroller. */
+  .heatmap-cell:hover,
+  .heatmap-cell:focus-visible {
+    transform: none;
   }
 
   .heatmap-tooltip {
