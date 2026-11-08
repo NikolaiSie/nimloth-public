@@ -43,29 +43,24 @@ async function loadRoute() {
   return route.GET;
 }
 
-type FetchResult = { ok: boolean; status?: number; json?: () => Promise<unknown>; text?: () => Promise<string> };
-
 /**
- * Serves metadata, the per-country "Latest" probes (all caps, weighted mean) and
- * the requested slice. `probes` overrides the probe response per country.
+ * Serves metadata and slices. Like the data API, every "Latest" response lists
+ * the countries with data (`withData`; null mimics an API that does not).
  */
-function stubApi(slice: () => unknown, probes: Record<string, FetchResult> = {}) {
-  const fetchMock = vi.fn(async (url: string): Promise<FetchResult> => {
+function stubApi(slice: () => unknown, withData: string[] | null = ["ALL", "US"]) {
+  const fetchMock = vi.fn(async (url: string) => {
     const parsed = new URL(url);
     if (parsed.pathname.endsWith("/metadata")) {
       return { ok: true, json: async () => metadataPayload };
     }
-    const params = parsed.searchParams;
-    const country = params.get("country") ?? "";
-    const isProbe =
-      parsed.pathname.endsWith("/latest") &&
-      country !== "ALL" &&
-      params.get("cap") === "ALL" &&
-      params.get("aggregation") === "weighted_mean";
-    if (isProbe) {
-      return probes[country] ?? { ok: true, json: async () => ({ ...matrixPayload(null), country }) };
-    }
-    return { ok: true, json: async () => slice() };
+    const isLatest = parsed.pathname.endsWith("/latest");
+    return {
+      ok: true,
+      json: async () => ({
+        ...(slice() as object),
+        ...(isLatest && withData ? { countries_with_data: withData } : {}),
+      }),
+    };
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -173,11 +168,8 @@ describe("momentum research route", () => {
     expect(payload.matrix.aggregation).toBe("weighted_mean");
   });
 
-  it("lists only countries with data in the Latest call", async () => {
-    stubApi(() => ({ ...matrixPayload(null), mode: "latest_available" }), {
-      DE: { ok: false, status: 404, text: async () => "Matrix slice not found" },
-      XX: { ok: true, json: async () => ({ ...matrixPayload(null), country: "XX", values: [[null]] }) },
-    });
+  it("lists only countries with data in the Latest call, reusing that call", async () => {
+    const fetchMock = stubApi(() => ({ ...matrixPayload(null), mode: "latest_available" }));
 
     const GET = await loadRoute();
     const response = await GET(new NextRequest("https://site.example/api/research/momentum"));
@@ -186,12 +178,31 @@ describe("momentum research route", () => {
     expect(response.status).toBe(200);
     expect(payload.metadata.countries).toEqual(["ALL", "US"]);
     expect(payload.metadata.country_names).toEqual({ ALL: "All countries", US: "United States" });
+    const latestCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/latest"));
+    expect(latestCalls).toHaveLength(1);
   });
 
-  it("falls back to every country when a Latest probe fails", async () => {
-    stubApi(() => ({ ...matrixPayload(null), mode: "latest_available" }), {
-      DE: { ok: false, status: 503, text: async () => "unavailable" },
+  it("takes the country list from the default Latest call for a dated view", async () => {
+    const fetchMock = stubApi(() => matrixPayload("2026-09-08"));
+
+    const GET = await loadRoute();
+    const response = await GET(
+      new NextRequest("https://site.example/api/research/momentum?date=2026-09-08&country=US"),
+    );
+    const payload = await response.json();
+
+    expect(payload.metadata.countries).toEqual(["ALL", "US"]);
+    const latestCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/latest"));
+    expect(latestCalls).toHaveLength(1);
+    expect(Object.fromEntries(new URL(String(latestCalls[0][0])).searchParams)).toEqual({
+      country: "ALL",
+      cap: "ALL",
+      aggregation: "weighted_mean",
     });
+  });
+
+  it("keeps every country when the Latest call does not list them", async () => {
+    stubApi(() => ({ ...matrixPayload(null), mode: "latest_available" }), null);
 
     const GET = await loadRoute();
     const response = await GET(new NextRequest("https://site.example/api/research/momentum"));

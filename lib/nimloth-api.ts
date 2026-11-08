@@ -49,6 +49,8 @@ export type MomentumMatrixSlice = {
   max_sort_value_q1: Array<Array<number | null>>;
   min_sort_value_q5: Array<Array<number | null>>;
   max_sort_value_q5: Array<Array<number | null>>;
+  /** "Latest" responses only: countries with at least one value in the latest snapshot. */
+  countries_with_data?: string[];
 };
 
 const metadataSchema = z.object({
@@ -92,6 +94,7 @@ const matrixSliceSchema = z.object({
   max_sort_value_q1: z.array(z.array(z.number().nullable())).default([]),
   min_sort_value_q5: z.array(z.array(z.number().nullable())).default([]),
   max_sort_value_q5: z.array(z.array(z.number().nullable())).default([]),
+  countries_with_data: z.array(z.string()).optional(),
 });
 
 export class NimlothApiError extends Error {
@@ -212,70 +215,60 @@ export async function getLatestMomentumMatrix(
   )) as MomentumMatrixSlice;
 }
 
-/** True when the country's latest slice (all caps, weighted mean) has at least one value. */
-async function hasLatestData(country: string) {
-  try {
-    const slice = await getLatestMomentumMatrix({ country, cap: "ALL", aggregation: "weighted_mean" });
-    return slice.values.some((row) => row.some((value) => typeof value === "number" && Number.isFinite(value)));
-  } catch (error) {
-    if (error instanceof NimlothApiError && error.status === 404) {
-      return false;
-    }
-    throw error;
-  }
-}
+/** The heatmap's default "Latest" view; its response also lists the countries with data. */
+export const DEFAULT_LATEST_QUERY = {
+  country: "ALL",
+  cap: "ALL",
+  aggregation: "weighted_mean",
+} as const satisfies MomentumMatrixQuery;
 
 /**
- * Keeps the countries for which `probe` resolves true, in their original order.
- * "ALL" is always kept. A probe error rejects the whole call, so a partial result
- * is never cached.
+ * Limits the metadata's markets to the countries with data in a "Latest"
+ * response. Kept unchanged if the response does not list them (older API).
  */
-export async function filterCountries(
-  countries: string[],
-  probe: (country: string) => Promise<boolean>,
-  concurrency = 8,
-) {
-  const keep = new Map<string, boolean>([["ALL", true]]);
-  const queue = countries.filter((country) => country !== "ALL");
-  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
-    for (let country = queue.shift(); country !== undefined; country = queue.shift()) {
-      keep.set(country, await probe(country));
-    }
-  });
-  await Promise.all(workers);
-  return countries.filter((country) => keep.get(country));
-}
-
-const getCachedLatestCountries = unstable_cache(
-  async (countries: string[]) => filterCountries(countries, hasLatestData),
-  ["nimloth-momentum-latest-countries"],
-  {
-    // One probe per country; the latest snapshot changes at most daily.
-    revalidate: 60 * 60,
-  },
-);
-
-/**
- * Metadata whose country list is limited to countries with data in the
- * "Latest" heatmap call. Falls back to the full list if the probes fail.
- */
-export async function getMomentumMetadataWithLatestCountries(): Promise<MomentumMetadata> {
-  const metadata = await getMomentumMetadata();
-  let countries: string[];
-  try {
-    countries =
-      process.env.NODE_ENV === "test"
-        ? await filterCountries(metadata.countries, hasLatestData)
-        : await getCachedLatestCountries(metadata.countries);
-  } catch {
+export function withLatestCountries(
+  metadata: MomentumMetadata,
+  latest: Pick<MomentumMatrixSlice, "countries_with_data">,
+): MomentumMetadata {
+  const withData = latest.countries_with_data;
+  if (!withData || withData.length === 0) {
     return metadata;
   }
+  const keep = new Set(withData);
+  const countries = metadata.countries.filter((country) => country === "ALL" || keep.has(country));
   const names = metadata.country_names ?? {};
   return {
     ...metadata,
     countries,
     country_names: Object.fromEntries(countries.map((country) => [country, names[country] ?? null])),
   };
+}
+
+const getCachedDefaultLatestMomentumMatrix = unstable_cache(
+  async () => getLatestMomentumMatrix(DEFAULT_LATEST_QUERY),
+  ["nimloth-momentum-default-latest"],
+  { revalidate: 300 },
+);
+
+function getDefaultLatestMomentumMatrix() {
+  return process.env.NODE_ENV === "test"
+    ? getLatestMomentumMatrix(DEFAULT_LATEST_QUERY)
+    : getCachedDefaultLatestMomentumMatrix();
+}
+
+/**
+ * Metadata whose market list is the countries with data in the default
+ * "Latest" heatmap fetch. Pass that fetch's response when it is already in hand.
+ * If the latest fetch fails, the full list is returned.
+ */
+export async function getMomentumMetadataWithLatestCountries(
+  latest?: MomentumMatrixSlice,
+): Promise<MomentumMetadata> {
+  const [metadata, defaultLatest] = await Promise.all([
+    getMomentumMetadata(),
+    latest ? Promise.resolve(latest) : getDefaultLatestMomentumMatrix().catch(() => null),
+  ]);
+  return defaultLatest ? withLatestCountries(metadata, defaultLatest) : metadata;
 }
 
 export type MomentumSeriesQuery = {
