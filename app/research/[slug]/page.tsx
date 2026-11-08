@@ -6,7 +6,11 @@ import {
   type MomentumOverviewPayload,
 } from "@/components/momentum-overview";
 import { getContentBySlug, getContentIndex } from "@/lib/content";
-import { getLatestMomentumMatrix, getMomentumMetadataWithLatestCountries } from "@/lib/nimloth-api";
+import {
+  DEFAULT_LATEST_QUERY,
+  getLatestMomentumMatrix,
+  getMomentumMetadataWithLatestCountries,
+} from "@/lib/nimloth-api";
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 type ResearchArticlePageProps = {
@@ -62,12 +66,8 @@ export default async function ResearchArticlePage({
   let initialError: string | null = null;
 
   try {
-    const metadata = await getMomentumMetadataWithLatestCountries();
-    const matrix = await getLatestMomentumMatrix({
-      country: "ALL",
-      cap: "ALL",
-      aggregation: "weighted_mean",
-    });
+    const matrix = await getLatestMomentumMatrix(DEFAULT_LATEST_QUERY);
+    const metadata = await getMomentumMetadataWithLatestCountries(matrix);
 
     initialPayload = {
       metadata,

@@ -108,8 +108,8 @@ const originalEnv = process.env;
 const metadataPayload = {
   latest_date: "2010-04-15",
   dates: ["2010-01-04", "2010-04-15"],
-  countries: ["ALL", "US"],
-  country_names: { ALL: "All countries", US: "United States" },
+  countries: ["ALL", "US", "DE"],
+  country_names: { ALL: "All countries", US: "United States", DE: "Germany" },
   caps: ["ALL", "LC"],
   aggregations: ["mean", "median", "weighted_mean"],
   sort_features: ["momentum_12m_ex_1m", "level_to_ma_200d"],
@@ -138,16 +138,17 @@ function seriesPayload(country: string, cap: string, aggregation: string) {
   };
 }
 
-/** A "Latest" slice with one value, so the probed country counts as having data. */
-function latestPayload(country: string) {
+/** The default "Latest" slice, which lists the countries with data. */
+function latestPayload() {
   return {
     date: null,
-    country,
+    country: "ALL",
     cap: "ALL",
     aggregation: "weighted_mean",
     rows: ["momentum_12m_ex_1m"],
     columns: ["forward_return_1m"],
     values: [[0.01]],
+    countries_with_data: ["ALL", "US"],
   };
 }
 
@@ -175,7 +176,7 @@ describe("cumulative momentum route", () => {
       }
       const params = parsed.searchParams;
       if (parsed.pathname.endsWith("/latest")) {
-        return { ok: true, json: async () => latestPayload(params.get("country") ?? "") };
+        return { ok: true, json: async () => latestPayload() };
       }
       return {
         ok: true,
@@ -206,6 +207,8 @@ describe("cumulative momentum route", () => {
       start: "2010-01-01",
     });
     expect(body.options.signals).toEqual(["momentum_12m_ex_1m"]);
+    // DE has no data in the default "Latest" call, so it is not offered.
+    expect(body.options.countries).toEqual(["ALL", "US"]);
     expect(body.options.countryNames).toEqual({ ALL: "All countries", US: "United States" });
 
     const seriesCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/series"));
@@ -242,7 +245,7 @@ describe("cumulative momentum route", () => {
         String(url).includes("/metadata")
           ? { ok: true, json: async () => metadataPayload }
           : String(url).includes("/latest")
-            ? { ok: true, json: async () => latestPayload(new URL(url).searchParams.get("country") ?? "") }
+            ? { ok: true, json: async () => latestPayload() }
             : { ok: false, status: 404, text: async () => "Series not found" },
       ),
     );

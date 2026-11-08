@@ -66,13 +66,16 @@ export async function GET(request: NextRequest) {
   const selectedDate = normalizeDateParam(parsed.date);
 
   try {
-    const metadata = await getMomentumMetadataWithLatestCountries();
     const rawMatrix = selectedDate
       ? await getMomentumMatrix({
           ...parsed,
           date: selectedDate,
         })
       : await getLatestMomentumMatrix(parsed);
+    // Any "Latest" response lists the countries with data; reuse it rather than refetch.
+    const metadata = await getMomentumMetadataWithLatestCountries(
+      !selectedDate && rawMatrix?.countries_with_data ? rawMatrix : undefined,
+    );
 
     if (!rawMatrix) {
       return NextResponse.json(
