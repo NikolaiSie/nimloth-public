@@ -1123,10 +1123,9 @@ svg {
 .cumulative-chart__panel-label {
   fill: var(--muted);
   font-family: var(--ui);
-  font-size: 0.66rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .cumulative-chart__empty {

@@ -424,7 +424,7 @@ export function MomentumCumulative() {
               height={height}
               viewBox={`0 0 ${width} ${height}`}
               role="img"
-              aria-label={`Cumulative top-minus-bottom quintile return of ${formatSignalLabel(signal)}, ${marketLabel}, ${formatCapLabel(cap).toLowerCase()}, ${(AGGREGATION_LABELS[aggregation] ?? aggregation).toLowerCase()}: ${formatPercent(finalPoint.cumulative)} in total.${chart.bars.length > 0 ? " Bars below show the number of stocks ranked each month." : ""}`}
+              aria-label={`Cumulative top-minus-bottom quintile return of ${formatSignalLabel(signal)}, ${marketLabel}, ${formatCapLabel(cap).toLowerCase()}, ${(AGGREGATION_LABELS[aggregation] ?? aggregation).toLowerCase()}: ${formatPercent(finalPoint.cumulative)} in total.${chart.bars.length > 0 ? " Bars below show the number of observations each month." : ""}`}
             >
               <defs>
                 <linearGradient id={`${gradientId}-up`} x1="0" x2="0" y1="0" y2="1">
@@ -487,7 +487,7 @@ export function MomentumCumulative() {
               {chart.bars.length > 0 ? (
                 <g>
                   <text className="cumulative-chart__panel-label" x={MARGIN.left} y={chart.barsTop - 12}>
-                    Stocks ranked
+                    # obs
                   </text>
                   <line
                     className="cumulative-chart__grid"
@@ -605,7 +605,7 @@ export function MomentumCumulative() {
                 <>
                   <p>Month Q5 − Q1 {formatPercent(hovered.period.spread, 2, true)}</p>
                   {typeof hovered.period.observations === "number" ? (
-                    <p>Stocks ranked {countFormat.format(hovered.period.observations)}</p>
+                    <p># obs {countFormat.format(hovered.period.observations)}</p>
                   ) : null}
                   <p>Formed {formatDay(toTime(hovered.period.date))}</p>
                 </>
