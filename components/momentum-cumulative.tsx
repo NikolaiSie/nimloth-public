@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { MOMENTUM_AGGREGATIONS, type MomentumAggregation } from "@/lib/momentum-aggregations";
 import {
+  annualizedVolatility,
   CUMULATIVE_DEFAULT_SIGNAL,
   CUMULATIVE_DEFAULT_START,
   formatCapLabel,
@@ -256,6 +257,9 @@ export function MomentumCumulative() {
     plotPoints.length > 1 ? (plotPoints[plotPoints.length - 1].x - plotPoints[0].x) / (365.25 * 86_400_000) : 0;
   const annualized = finalPoint && years > 0 ? (1 + finalPoint.cumulative) ** (1 / years) - 1 : null;
   const drawdown = plotPoints.length > 1 ? maxDrawdown(plotPoints) : null;
+  // Sharpe of the visible series: annualized return / annualized volatility of its monthly spreads.
+  const volatility = annualizedVolatility(payload?.points.map((point) => point.spread) ?? []);
+  const sharpe = annualized !== null && volatility ? annualized / volatility : null;
   const hovered = hoverIndex !== null ? plotPoints[hoverIndex] : null;
   const tooltipLeft = hovered && chart ? Math.min(Math.max(chart.xScale(hovered.x), 96), width - 96) : 0;
   const marketLabel = markets.find((option) => option.value === country)?.label ?? country;
@@ -277,6 +281,7 @@ export function MomentumCumulative() {
                 {drawdown !== null ? (
                   <span className="tag">Max drawdown {formatPercent(drawdown)}</span>
                 ) : null}
+                {sharpe !== null ? <span className="tag">Sharpe {sharpe.toFixed(2)}</span> : null}
               </>
             ) : null}
           </div>
