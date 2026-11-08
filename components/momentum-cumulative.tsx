@@ -44,6 +44,12 @@ type PlotPoint = {
 };
 
 const MARGIN = { top: 20, right: 64, bottom: 34, left: 52 };
+/** Space between the return panel and the observations panel, room for its caption. */
+const PANEL_GAP = 30;
+/** The observations panel is a quarter of the return panel's height. */
+const OBSERVATIONS_RATIO = 0.25;
+const countFormat = new Intl.NumberFormat("en-US");
+const compactCountFormat = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 const AGGREGATION_LABELS: Record<string, string> = {
   mean: "Mean",
   median: "Median",
@@ -183,7 +189,11 @@ export function MomentumCumulative() {
   }, [aggregation, cap, country, signal, start]);
 
   const plotPoints = useMemo(() => buildPlotPoints(payload?.points ?? []), [payload]);
-  const height = width < 520 ? 260 : 340;
+  const lineHeight = width < 520 ? 260 : 340;
+  const lineInnerHeight = lineHeight - MARGIN.top - MARGIN.bottom;
+  const hasObservations = plotPoints.some((point) => typeof point.period?.observations === "number");
+  const barsHeight = hasObservations ? Math.round(lineInnerHeight * OBSERVATIONS_RATIO) : 0;
+  const height = lineHeight + (hasObservations ? PANEL_GAP + barsHeight : 0);
 
   const chart = useMemo(() => {
     if (plotPoints.length < 2) {
@@ -191,13 +201,15 @@ export function MomentumCumulative() {
     }
 
     const innerWidth = width - MARGIN.left - MARGIN.right;
-    const innerHeight = height - MARGIN.top - MARGIN.bottom;
+    const innerHeight = lineInnerHeight;
+    const lineBottom = MARGIN.top + innerHeight;
+    const plotBottom = height - MARGIN.bottom;
     const xMin = plotPoints[0].x;
     const xMax = plotPoints[plotPoints.length - 1].x;
     const values = plotPoints.map((point) => point.cumulative);
     const rawMin = Math.min(0, ...values);
     const rawMax = Math.max(0, ...values);
-    const step = niceStep(rawMax - rawMin || 0.1, height < 300 ? 4 : 5);
+    const step = niceStep(rawMax - rawMin || 0.1, lineHeight < 300 ? 4 : 5);
     const yMin = Math.floor(rawMin / step) * step;
     const yMax = Math.ceil(rawMax / step) * step;
 
@@ -228,8 +240,51 @@ export function MomentumCumulative() {
     const zeroY = yScale(0);
     const area = `${line}L${xScale(xMax).toFixed(1)},${zeroY.toFixed(1)}L${xScale(xMin).toFixed(1)},${zeroY.toFixed(1)}Z`;
 
-    return { innerWidth, innerHeight, xScale, yScale, yTicks, xTicks, line, area, zeroY, step };
-  }, [height, plotPoints, width]);
+    // Observations panel: one bar per month, spanning the period it was held.
+    const counts = plotPoints.flatMap((point) =>
+      typeof point.period?.observations === "number" ? [point.period.observations] : [],
+    );
+    const countStep = niceStep(Math.max(...counts, 1), 2);
+    const countMax = Math.ceil(Math.max(...counts, 1) / countStep) * countStep;
+    const barsTop = plotBottom - barsHeight;
+    const bars = plotPoints.flatMap((point, index) => {
+      const count = point.period?.observations;
+      if (!point.period || typeof count !== "number") {
+        return [];
+      }
+      const x0 = xScale(toTime(point.period.date));
+      const x1 = xScale(point.x);
+      const inset = x1 - x0 >= 3 ? 0.5 : 0;
+      const barHeight = (count / countMax) * barsHeight;
+      return [
+        {
+          index,
+          x: x0 + inset,
+          width: Math.max(x1 - x0 - 2 * inset, 0.6),
+          y: plotBottom - barHeight,
+          height: barHeight,
+        },
+      ];
+    });
+
+    return {
+      innerWidth,
+      innerHeight,
+      lineBottom,
+      plotBottom,
+      xScale,
+      yScale,
+      yTicks,
+      xTicks,
+      line,
+      area,
+      zeroY,
+      step,
+      bars,
+      barsTop,
+      countMax,
+    };
+  }, [barsHeight, height, lineInnerHeight, lineHeight, plotPoints, width]);
 
   function handlePointerMove(event: React.PointerEvent<SVGRectElement>) {
     if (!chart) {
@@ -369,7 +424,7 @@ export function MomentumCumulative() {
               height={height}
               viewBox={`0 0 ${width} ${height}`}
               role="img"
-              aria-label={`Cumulative top-minus-bottom quintile return of ${formatSignalLabel(signal)}, ${marketLabel}, ${formatCapLabel(cap).toLowerCase()}, ${(AGGREGATION_LABELS[aggregation] ?? aggregation).toLowerCase()}: ${formatPercent(finalPoint.cumulative)} in total.`}
+              aria-label={`Cumulative top-minus-bottom quintile return of ${formatSignalLabel(signal)}, ${marketLabel}, ${formatCapLabel(cap).toLowerCase()}, ${(AGGREGATION_LABELS[aggregation] ?? aggregation).toLowerCase()}: ${formatPercent(finalPoint.cumulative)} in total.${chart.bars.length > 0 ? " Bars below show the number of observations each month." : ""}`}
             >
               <defs>
                 <linearGradient id={`${gradientId}-up`} x1="0" x2="0" y1="0" y2="1">
@@ -384,7 +439,7 @@ export function MomentumCumulative() {
                   <rect x={0} y={0} width={width} height={chart.zeroY} />
                 </clipPath>
                 <clipPath id={`${gradientId}-below`}>
-                  <rect x={0} y={chart.zeroY} width={width} height={height - chart.zeroY} />
+                  <rect x={0} y={chart.zeroY} width={width} height={Math.max(chart.lineBottom - chart.zeroY, 0)} />
                 </clipPath>
               </defs>
 
@@ -416,8 +471,8 @@ export function MomentumCumulative() {
                     className="cumulative-chart__tick"
                     x1={chart.xScale(tick)}
                     x2={chart.xScale(tick)}
-                    y1={height - MARGIN.bottom}
-                    y2={height - MARGIN.bottom + 5}
+                    y1={chart.plotBottom}
+                    y2={chart.plotBottom + 5}
                   />
                   <text
                     className="cumulative-chart__label"
@@ -429,12 +484,53 @@ export function MomentumCumulative() {
                   </text>
                 </g>
               ))}
+              {chart.bars.length > 0 ? (
+                <g>
+                  <text className="cumulative-chart__panel-label" x={MARGIN.left} y={chart.barsTop - 12}>
+                    # obs
+                  </text>
+                  <line
+                    className="cumulative-chart__grid"
+                    x1={MARGIN.left}
+                    x2={width - MARGIN.right}
+                    y1={chart.barsTop}
+                    y2={chart.barsTop}
+                  />
+                  <text
+                    className="cumulative-chart__label"
+                    x={MARGIN.left - 10}
+                    y={chart.barsTop}
+                    dy="0.32em"
+                    textAnchor="end"
+                  >
+                    {compactCountFormat.format(chart.countMax)}
+                  </text>
+                  {chart.bars.map((bar) => (
+                    <rect
+                      className={`cumulative-chart__bar${bar.index === hoverIndex ? " cumulative-chart__bar--active" : ""}`}
+                      key={bar.index}
+                      x={bar.x}
+                      y={bar.y}
+                      width={bar.width}
+                      height={bar.height}
+                    />
+                  ))}
+                </g>
+              ) : (
+                <line
+                  className="cumulative-chart__axis"
+                  x1={MARGIN.left}
+                  x2={width - MARGIN.right}
+                  y1={chart.lineBottom}
+                  y2={chart.lineBottom}
+                />
+              )}
               <line
                 className="cumulative-chart__axis"
                 x1={MARGIN.left}
                 x2={width - MARGIN.right}
-                y1={height - MARGIN.bottom}
-                y2={height - MARGIN.bottom}
+                y1={chart.plotBottom}
+                y2={chart.plotBottom}
               />
 
               <path className="cumulative-chart__area" d={chart.area} fill={`url(#${gradientId}-up)`} clipPath={`url(#${gradientId}-above)`} />
@@ -475,7 +571,7 @@ export function MomentumCumulative() {
                     x1={chart.xScale(hovered.x)}
                     x2={chart.xScale(hovered.x)}
                     y1={MARGIN.top}
-                    y2={height - MARGIN.bottom}
+                    y2={chart.plotBottom}
                   />
                   <circle
                     className="cumulative-chart__marker"
@@ -489,7 +585,7 @@ export function MomentumCumulative() {
                 x={MARGIN.left}
                 y={MARGIN.top}
                 width={chart.innerWidth}
-                height={chart.innerHeight}
+                height={chart.plotBottom - MARGIN.top}
                 fill="transparent"
                 onPointerMove={handlePointerMove}
                 onPointerDown={handlePointerMove}
@@ -508,6 +604,9 @@ export function MomentumCumulative() {
               {hovered.period ? (
                 <>
                   <p>Month Q5 − Q1 {formatPercent(hovered.period.spread, 2, true)}</p>
+                  {typeof hovered.period.observations === "number" ? (
+                    <p># obs {countFormat.format(hovered.period.observations)}</p>
+                  ) : null}
                   <p>Formed {formatDay(toTime(hovered.period.date))}</p>
                 </>
               ) : (
