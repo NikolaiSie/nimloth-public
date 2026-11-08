@@ -1009,6 +1009,10 @@ svg {
   border-bottom: 1px solid var(--border);
 }
 
+.research-filters--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .research-filter input[type="date"] {
   width: 100%;
   min-width: 0;
@@ -1061,6 +1065,38 @@ svg {
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.cumulative-chart__line--negative {
+  stroke: var(--bronze);
+}
+
+.cumulative-chart__area {
+  stroke: none;
+}
+
+.cumulative-chart__axis {
+  stroke: rgba(7, 28, 47, 0.28);
+  stroke-width: 1;
+}
+
+.cumulative-chart__tick {
+  stroke: rgba(7, 28, 47, 0.28);
+  stroke-width: 1;
+}
+
+.cumulative-chart__end {
+  fill: var(--gold);
+  stroke: var(--stone-light);
+  stroke-width: 2;
+}
+
+.cumulative-chart__end-label {
+  fill: var(--navy);
+  font-family: var(--ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .cumulative-chart__crosshair {
@@ -1514,6 +1550,28 @@ svg {
   }
 
   .research-filters--six .research-filter:nth-child(n + 5) {
+    border-bottom: 0;
+  }
+
+  .research-filters--five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .research-filters--five .research-filter:nth-child(n) {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Signal names are long, so the signal picker takes the last full-width row. */
+  .research-filters--five .research-filter:nth-child(2),
+  .research-filters--five .research-filter:nth-child(5) {
+    border-right: 0;
+  }
+
+  .research-filters--five .research-filter:nth-child(4) {
+    order: 1;
+    grid-column: 1 / -1;
+    border-right: 0;
     border-bottom: 0;
   }
 
