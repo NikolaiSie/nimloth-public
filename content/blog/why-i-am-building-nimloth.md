@@ -1,10 +1,10 @@
 ---
-title: From end to end
+title: Systematics from end to end
 summary: >-
   Nimloth Capital is a project that fits in 6 boxes, which span the whole work
   of systematic investing: Data, infrastructure, research, risk, optimization,
   and trading.
-publishedAt: 2026-09-13
+publishedAt: 2026-10-28
 tags:
   - nimloth
 featured: true
