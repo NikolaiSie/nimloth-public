@@ -1,7 +1,7 @@
 ---
 title: Momentum in global data
 summary: A live snapshot of the performance of all momentum factors across the world.
-publishedAt: 2026-09-23
+publishedAt: 2026-11-09
 tags:
   - data
   - momentum

@@ -1,5 +1,5 @@
 import { ArticleCard } from "@/components/article-card";
-import { compareBlogCardOrder, getContentIndex } from "@/lib/content";
+import { compareContentNewestFirst, getContentIndex } from "@/lib/content";
 
 export const metadata = {
   title: "Blog",
@@ -11,7 +11,7 @@ export default async function ResearchIndexPage() {
     getContentIndex("research"),
     getContentIndex("blog"),
   ]);
-  const entries = [...research, ...posts].sort(compareBlogCardOrder);
+  const entries = [...research, ...posts].sort(compareContentNewestFirst);
 
   return (
     <div className="container">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
 import { SectionHeading } from "@/components/section-heading";
-import { compareBlogCardOrder, getFeaturedPosts } from "@/lib/content";
+import { compareContentNewestFirst, getFeaturedPosts } from "@/lib/content";
 
 export default async function HomePage() {
   const [featuredPosts, featuredResearch] = await Promise.all([
@@ -9,7 +9,7 @@ export default async function HomePage() {
     getFeaturedPosts("research", 2),
   ]);
   const featuredEntries = [...featuredResearch, ...featuredPosts].sort(
-    compareBlogCardOrder,
+    compareContentNewestFirst,
   );
 
   return (

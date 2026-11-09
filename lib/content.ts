@@ -101,24 +101,6 @@ export function compareContentNewestFirst(
   return right.publishedAt.localeCompare(left.publishedAt);
 }
 
-export function compareBlogCardOrder(
-  left: ContentIndexEntry,
-  right: ContentIndexEntry,
-) {
-  const priority = new Map([
-    ["why-i-am-building-nimloth", 0],
-    ["momentum", 1],
-  ]);
-  const leftPriority = priority.get(left.slug) ?? 100;
-  const rightPriority = priority.get(right.slug) ?? 100;
-
-  if (leftPriority !== rightPriority) {
-    return leftPriority - rightPriority;
-  }
-
-  return compareContentNewestFirst(left, right);
-}
-
 async function listMarkdownFiles(type: ContentType) {
   const entries = await fs.readdir(getDirectory(type), { withFileTypes: true });
   return entries
