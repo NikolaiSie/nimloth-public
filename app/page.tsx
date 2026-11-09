@@ -55,7 +55,7 @@ export default async function HomePage() {
               Emerging Markets equity portfolio for Norway&apos;s $2 trillion
               Sovereign Wealth Fund. Now I&apos;m returning to school to deepen my
               quantitative and engineering toolkit through Columbia&apos;s dual MBA/MS
-              Engineering program: Nimloth is where I put that work into practice:
+              Engineering program. Nimloth is where I put that work into practice:
               building an end-to-end systematic equities platform and documenting the
               research, engineering, and investment problems I encounter along the way.
             </p>
