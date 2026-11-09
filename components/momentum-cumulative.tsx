@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { MOMENTUM_AGGREGATIONS, type MomentumAggregation } from "@/lib/momentum-aggregations";
 import {
   annualizedVolatility,
+  maxDrawdown,
   CUMULATIVE_DEFAULT_SIGNAL,
   CUMULATIVE_DEFAULT_START,
   formatCapLabel,
@@ -36,7 +37,7 @@ type CumulativePayload = {
 };
 
 type PlotPoint = {
-  /** End of the period, where the compounded value is plotted. */
+  /** End of the period, where the summed value is plotted. */
   x: number;
   cumulative: number;
   /** Null for the origin point. */
@@ -109,17 +110,6 @@ function buildPlotPoints(points: CumulativePoint[]): PlotPoint[] {
       period: point,
     })),
   ];
-}
-
-function maxDrawdown(points: PlotPoint[]) {
-  let peak = 1;
-  let worst = 0;
-  for (const point of points) {
-    const wealth = 1 + point.cumulative;
-    peak = Math.max(peak, wealth);
-    worst = Math.min(worst, wealth / peak - 1);
-  }
-  return worst;
 }
 
 export function MomentumCumulative() {
@@ -310,8 +300,8 @@ export function MomentumCumulative() {
   const finalPoint = plotPoints.at(-1);
   const years =
     plotPoints.length > 1 ? (plotPoints[plotPoints.length - 1].x - plotPoints[0].x) / (365.25 * 86_400_000) : 0;
-  const annualized = finalPoint && years > 0 ? (1 + finalPoint.cumulative) ** (1 / years) - 1 : null;
-  const drawdown = plotPoints.length > 1 ? maxDrawdown(plotPoints) : null;
+  const annualized = finalPoint && years > 0 ? finalPoint.cumulative / years : null;
+  const drawdown = plotPoints.length > 1 ? maxDrawdown(plotPoints.map((point) => point.cumulative)) : null;
   // Sharpe of the visible series: annualized return / annualized volatility of its monthly spreads.
   const volatility = annualizedVolatility(payload?.points.map((point) => point.spread) ?? []);
   const sharpe = annualized !== null && volatility ? annualized / volatility : null;
@@ -325,6 +315,7 @@ export function MomentumCumulative() {
         <div className="research-overview__header">
           <div>
             <h2>Cumulative returns</h2>
+            <p className="cumulative-chart__note">Sum of monthly Q5 − Q1 returns on constant capital, not compounded.</p>
           </div>
           <div className="research-overview__meta">
             {finalPoint ? (

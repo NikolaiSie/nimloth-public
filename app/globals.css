@@ -1157,6 +1157,12 @@ svg {
   line-height: 1.45;
 }
 
+.cumulative-chart__note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .cumulative-chart__tooltip .cumulative-chart__tooltip-title {
   margin-bottom: 0.35rem;
   color: var(--gold-light);

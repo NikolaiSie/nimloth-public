@@ -3,6 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   annualizedVolatility,
   buildCumulativeSeries,
+  maxDrawdown,
   formatCapLabel,
   formatSignalLabel,
   marketOptions,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/momentum-cumulative";
 
 describe("buildCumulativeSeries", () => {
-  it("compounds monthly spreads", () => {
+  it("sums monthly spreads", () => {
     const { points } = buildCumulativeSeries([
       { date: "2010-01-04", spread: 0.1 },
       { date: "2010-02-01", spread: -0.1 },
@@ -19,8 +20,22 @@ describe("buildCumulativeSeries", () => {
 
     expect(points.map((point) => point.cumulative)).toEqual([
       expect.closeTo(0.1, 10),
-      expect.closeTo(-0.01, 10),
-      expect.closeTo(0.0395, 10),
+      expect.closeTo(0, 10),
+      expect.closeTo(0.05, 10),
+    ]);
+  });
+
+  it("keeps a spread below -100% as one drop instead of flipping the series", () => {
+    const { points } = buildCumulativeSeries([
+      { date: "2021-01-04", spread: 0.1 },
+      { date: "2021-02-01", spread: -3.4 },
+      { date: "2021-03-01", spread: 0.2 },
+    ]);
+
+    expect(points.map((point) => point.cumulative)).toEqual([
+      expect.closeTo(0.1, 10),
+      expect.closeTo(-3.3, 10),
+      expect.closeTo(-3.1, 10),
     ]);
   });
 
@@ -34,7 +49,7 @@ describe("buildCumulativeSeries", () => {
     ]);
 
     expect(series.points.map((point) => point.date)).toEqual(["2010-02-01", "2010-04-01"]);
-    expect(series.points.at(-1)?.cumulative).toBeCloseTo(0.21, 10);
+    expect(series.points.at(-1)?.cumulative).toBeCloseTo(0.2, 10);
     expect(series.skippedDates).toEqual(["2010-03-01"]);
   });
 });
@@ -60,13 +75,21 @@ describe("monthlyReturnsFromSeries", () => {
     ]);
   });
 
-  it("carries observation counts onto the compounded points", () => {
+  it("carries observation counts onto the summed points", () => {
     const { points } = buildCumulativeSeries(monthlyReturnsFromSeries(series, "momentum_1m", "2009-01-01"));
     expect(points.map((point) => point.observations)).toEqual([900, 1000, 1100]);
   });
 
   it("returns nothing for a signal the series does not publish", () => {
     expect(monthlyReturnsFromSeries(series, "skewness_1y", "2000-01-01")).toEqual([]);
+  });
+});
+
+describe("maxDrawdown", () => {
+  it("measures the largest fall from a running peak that starts at zero", () => {
+    expect(maxDrawdown([0.2, 0.5, 0.1, 0.3])).toBeCloseTo(-0.4, 10);
+    expect(maxDrawdown([-0.3, 0.2])).toBeCloseTo(-0.3, 10);
+    expect(maxDrawdown([0.1, 0.2])).toBe(0);
   });
 });
 
@@ -227,7 +250,7 @@ describe("cumulative momentum route", () => {
       "2010-02-01",
       "2010-03-01",
     ]);
-    expect(body.points.at(-1).cumulative).toBeCloseTo(1.1 * 1.1 * 0.5 - 1, 10);
+    expect(body.points.at(-1).cumulative).toBeCloseTo(0.1 + 0.1 - 0.5, 10);
   });
 
   it("rejects hidden or unknown signals, unknown markets and bad dates", async () => {
