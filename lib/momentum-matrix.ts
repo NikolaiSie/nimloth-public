@@ -34,6 +34,21 @@ function isLevelToMovingAverageFeature(rowLabel: string) {
   return normalized.startsWith("level_to_ma_");
 }
 
+/** Shown last, in this order, below the momentum and moving-average rows. */
+const TRAILING_ROWS = ["momentum_5y_ex_1y", "volatility_1m", "beta_1y", "skewness_1y"];
+
+function displayRowIndexes(rows: string[]) {
+  return rows
+    .flatMap((rowLabel, rowIndex) =>
+      isLevelToMovingAverageFeature(rowLabel) ? [] : [rowIndex],
+    )
+    .sort(
+      // indexOf is -1 for every other row, so those stay first in API order.
+      (left, right) =>
+        TRAILING_ROWS.indexOf(rows[left]) - TRAILING_ROWS.indexOf(rows[right]),
+    );
+}
+
 function filterRows<T>(rows: T[], rowIndexes: number[]) {
   return rowIndexes.map((rowIndex) => rows[rowIndex]);
 }
@@ -44,13 +59,11 @@ export function normalizeMomentumMatrixColumns(
 ) {
   const targetColumns =
     metadata.target_horizons.length > 0 ? metadata.target_horizons : slice.columns;
-  const rowIndexesToKeep = slice.rows
-    .map((rowLabel, rowIndex) =>
-      isLevelToMovingAverageFeature(rowLabel) ? null : rowIndex,
-    )
-    .filter((rowIndex): rowIndex is number => rowIndex !== null);
-  const hasFilteredRows = rowIndexesToKeep.length !== slice.rows.length;
-  const filteredSlice = hasFilteredRows
+  const rowIndexesToKeep = displayRowIndexes(slice.rows);
+  const hasRowChanges =
+    rowIndexesToKeep.length !== slice.rows.length ||
+    rowIndexesToKeep.some((rowIndex, position) => rowIndex !== position);
+  const filteredSlice = hasRowChanges
     ? {
         ...slice,
         rows: filterRows(slice.rows, rowIndexesToKeep),
@@ -74,7 +87,7 @@ export function normalizeMomentumMatrixColumns(
     : slice;
 
   if (
-    !hasFilteredRows &&
+    !hasRowChanges &&
     targetColumns.length === filteredSlice.columns.length &&
     targetColumns.every((column, index) => column === filteredSlice.columns[index])
   ) {
