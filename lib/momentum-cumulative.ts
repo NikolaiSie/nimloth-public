@@ -3,7 +3,9 @@
  *
  * The data API publishes, per market / cap bucket / aggregation, every signal's
  * 1-month forward Q5 − Q1 spread on each month's first trading day. The
- * strategy earns that spread, then rolls into the next month's, compounding.
+ * strategy earns that spread on constant capital each month, so cumulative
+ * return is the sum of the spreads. Compounding breaks here: a short leg can
+ * lose more than 100%, and a spread below −100% would flip the sign of wealth.
  */
 
 import type { MomentumSeries } from "@/lib/nimloth-api";
@@ -26,7 +28,7 @@ export type CumulativePoint = {
   date: string;
   /** Spread earned over the period starting on `date`. */
   spread: number;
-  /** Compounded return through the end of this period. */
+  /** Sum of the monthly spreads through the end of this period. */
   cumulative: number;
   /** Stocks ranked on `date`, or null if unpublished. */
   observations: number | null;
@@ -61,7 +63,7 @@ export function monthlyReturnsFromSeries(
 }
 
 /**
- * Compounds monthly spreads into a cumulative return series. Months before the
+ * Sums monthly spreads into a cumulative return series. Months before the
  * signal has data and trailing months whose forward return has not completed
  * are dropped; a missing month in the middle is skipped (held flat) and reported.
  */
@@ -76,7 +78,7 @@ export function buildCumulativeSeries(monthly: MonthlyReturn[]): CumulativeSerie
 
   const points: CumulativePoint[] = [];
   const skippedDates: string[] = [];
-  let growth = 1;
+  let cumulative = 0;
 
   for (const entry of sorted.slice(0, lastAvailable + 1)) {
     if (typeof entry.spread !== "number" || !Number.isFinite(entry.spread)) {
@@ -86,11 +88,11 @@ export function buildCumulativeSeries(monthly: MonthlyReturn[]): CumulativeSerie
       continue;
     }
 
-    growth *= 1 + entry.spread;
+    cumulative += entry.spread;
     points.push({
       date: entry.date,
       spread: entry.spread,
-      cumulative: growth - 1,
+      cumulative,
       observations: entry.observations ?? null,
     });
   }
@@ -164,6 +166,17 @@ export function marketOptions(
 /** Display name for a cap bucket code. */
 export function formatCapLabel(cap: string) {
   return ({ ALL: "All caps", SC: "Small caps", MC: "Mid caps", LC: "Large caps" } as Record<string, string>)[cap] ?? cap;
+}
+
+/** Largest peak-to-trough fall of a summed return series, in points of constant capital (0 or negative). */
+export function maxDrawdown(cumulativeReturns: number[]) {
+  let peak = 0;
+  let worst = 0;
+  for (const value of cumulativeReturns) {
+    peak = Math.max(peak, value);
+    worst = Math.min(worst, value - peak);
+  }
+  return worst;
 }
 
 /** Annualized volatility of monthly returns: sample standard deviation × √12; null below two months. */

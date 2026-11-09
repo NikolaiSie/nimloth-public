@@ -49,7 +49,7 @@ function toErrorResponse(error: unknown) {
 
 /**
  * One data-API request per filter change: the monthly series for the selected
- * market, cap bucket and aggregation, from which the chosen signal is compounded.
+ * market, cap bucket and aggregation, from which the chosen signal is summed.
  */
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse(
