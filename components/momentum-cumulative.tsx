@@ -306,7 +306,35 @@ export function MomentumCumulative() {
   const volatility = annualizedVolatility(payload?.points.map((point) => point.spread) ?? []);
   const sharpe = annualized !== null && volatility ? annualized / volatility : null;
   const hovered = hoverIndex !== null ? plotPoints[hoverIndex] : null;
-  const tooltipLeft = hovered && chart ? Math.min(Math.max(chart.xScale(hovered.x), 96), width - 96) : 0;
+  const tooltipPlacement = hovered && chart ? (() => {
+    const pointX = chart.xScale(hovered.x);
+    const pointY = chart.yScale(hovered.cumulative);
+    // Prefer a side of the marker; in a narrow chart, move above or below it.
+    // Either way, the highlighted value remains visible instead of sitting
+    // beneath the tooltip card.
+    const tooltipWidth = Math.min(200, width - 16);
+    const gap = 16;
+    const estimatedHeight = 172;
+    const roomOnRight = width - pointX;
+    const roomOnLeft = pointX;
+
+    if (Math.max(roomOnLeft, roomOnRight) < tooltipWidth + gap) {
+      const placeBelow = pointY + gap + estimatedHeight <= height - 8;
+      return {
+        side: "vertical",
+        left: Math.min(Math.max(pointX - tooltipWidth / 2, 8), width - tooltipWidth - 8),
+        top: placeBelow ? pointY + gap : Math.max(pointY - estimatedHeight - gap, 8),
+      };
+    }
+
+    const placeRight = roomOnRight >= tooltipWidth + gap;
+
+    return {
+      side: placeRight ? "right" : "left",
+      left: placeRight ? Math.min(pointX + gap, width - 8) : Math.max(pointX - gap, 8),
+      top: Math.min(Math.max(pointY - estimatedHeight / 2, 8), Math.max(height - estimatedHeight - 8, 8)),
+    };
+  })() : null;
   const marketLabel = markets.find((option) => option.value === country)?.label ?? country;
 
   return (
@@ -588,8 +616,11 @@ export function MomentumCumulative() {
               {isLoading ? "Loading monthly returns…" : "No completed months from this start date."}
             </div>
           )}
-          {hovered && chart ? (
-            <div className="cumulative-chart__tooltip" style={{ left: tooltipLeft }}>
+          {hovered && tooltipPlacement ? (
+            <div
+              className={`cumulative-chart__tooltip cumulative-chart__tooltip--${tooltipPlacement.side}`}
+              style={{ left: tooltipPlacement.left, top: tooltipPlacement.top }}
+            >
               <p className="cumulative-chart__tooltip-title">{formatMonth(hovered.x)}</p>
               <p>Cumulative {formatPercent(hovered.cumulative, 1, true)}</p>
               {hovered.period ? (

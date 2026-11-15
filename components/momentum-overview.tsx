@@ -342,6 +342,7 @@ export function MomentumOverview({
                           className="heatmap-cell"
                           key={`${rowLabel}-${columnLabel}`}
                           style={getHeatmapCellStyle(value, maxAbsoluteValue)}
+                          tabIndex={0}
                         >
                           <span>{formatHeatmapValue(value)}</span>
                           <div className="heatmap-tooltip">
