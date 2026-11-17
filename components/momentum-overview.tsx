@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   MOMENTUM_AGGREGATIONS,
   type MomentumAggregation,
@@ -23,6 +23,23 @@ export type MomentumOverviewPayload = {
     date: string | null;
   };
 };
+
+type ActiveCell = {
+  row: number;
+  column: number;
+  /** Position and width in px, relative to the heatmap frame. */
+  left: number;
+  top: number;
+  width: number;
+  /** Shown below the cell instead of above it. */
+  below: boolean;
+};
+
+const TOOLTIP_WIDTH = 208;
+const TOOLTIP_MARGIN = 8;
+const TOOLTIP_GAP = 10;
+/** Title plus seven lines; used only to decide whether it fits above the cell. */
+const TOOLTIP_ESTIMATED_HEIGHT = 180;
 
 type MomentumOverviewProps = {
   initialPayload: MomentumOverviewPayload | null;
@@ -123,6 +140,62 @@ export function MomentumOverview({
   const metadata = payload?.metadata ?? null;
   const maxAbsoluteValue = matrix ? getMaxAbsoluteValue(matrix.values) : 0;
   const dateMenuRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const [activeCell, setActiveCell] = useState<ActiveCell | null>(null);
+  const activeCellElement = useRef<HTMLElement | null>(null);
+  const tooltipId = useId();
+
+  /**
+   * Places the tooltip over the cell, kept inside the heatmap's width. It sits
+   * outside the scrolling grid, so neither the scroller nor the pinned metric
+   * column can clip it; it opens below the cell when there is no room above.
+   */
+  function showTooltip(row: number, column: number, cell: HTMLElement) {
+    const frame = frameRef.current;
+    if (!frame) {
+      return;
+    }
+    const frameBox = frame.getBoundingClientRect();
+    const cellBox = cell.getBoundingClientRect();
+    const cardTop =
+      frame.closest(".research-overview")?.getBoundingClientRect().top ?? frameBox.top;
+    const width = Math.min(TOOLTIP_WIDTH, frameBox.width - 2 * TOOLTIP_MARGIN);
+    const center = cellBox.left + cellBox.width / 2 - frameBox.left;
+    const roomAbove = Math.min(cellBox.top, cellBox.top - cardTop);
+    const below = roomAbove < TOOLTIP_ESTIMATED_HEIGHT + TOOLTIP_GAP;
+
+    activeCellElement.current = cell;
+    setActiveCell({
+      row,
+      column,
+      below,
+      width,
+      left: Math.min(
+        Math.max(center - width / 2, TOOLTIP_MARGIN),
+        frameBox.width - width - TOOLTIP_MARGIN,
+      ),
+      top: below
+        ? cellBox.bottom - frameBox.top + TOOLTIP_GAP
+        : cellBox.top - frameBox.top - TOOLTIP_GAP,
+    });
+  }
+
+  function hideTooltip() {
+    activeCellElement.current = null;
+    setActiveCell(null);
+  }
+
+  /** Sideways scrolling, including the browser bringing a tapped edge cell into view, moves the tooltip with its cell. */
+  function followActiveCell() {
+    const cell = activeCellElement.current;
+    if (cell && activeCell) {
+      showTooltip(activeCell.row, activeCell.column, cell);
+    }
+  }
+
+  useEffect(() => {
+    setActiveCell(null);
+  }, [matrix]);
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -132,6 +205,10 @@ export function MomentumOverview({
         !dateMenuRef.current.contains(event.target)
       ) {
         setIsDateMenuOpen(false);
+      }
+      // A tap outside the cells closes the tooltip, even where taps don't move focus.
+      if (!(event.target instanceof Element && event.target.closest(".heatmap-cell"))) {
+        setActiveCell(null);
       }
     }
 
@@ -307,8 +384,8 @@ export function MomentumOverview({
         ) : null}
 
         {matrix ? (
-          <>
-            <div className="heatmap-shell">
+          <div className="heatmap-frame" ref={frameRef}>
+            <div className="heatmap-shell" onScroll={followActiveCell}>
               <div className="heatmap-grid">
                 <div
                   className="heatmap-corner"
@@ -330,34 +407,30 @@ export function MomentumOverview({
                     </div>
                     {matrix.columns.map((columnLabel, columnIndex) => {
                       const value = matrix.values[rowIndex]?.[columnIndex] ?? null;
-                      const asOfDate =
-                        matrix.as_of_dates[rowIndex]?.[columnIndex] ?? null;
-                      const q1Value = matrix.q1_values[rowIndex]?.[columnIndex] ?? null;
-                      const q5Value = matrix.q5_values[rowIndex]?.[columnIndex] ?? null;
-                      const nTotal = matrix.n_total[rowIndex]?.[columnIndex] ?? null;
-                      const nQ1 = matrix.n_q1[rowIndex]?.[columnIndex] ?? null;
-                      const nQ5 = matrix.n_q5[rowIndex]?.[columnIndex] ?? null;
+                      const isActive =
+                        activeCell?.row === rowIndex && activeCell.column === columnIndex;
                       return (
                         <div
-                          className="heatmap-cell"
+                          aria-describedby={isActive ? tooltipId : undefined}
+                          className={`heatmap-cell${isActive ? " heatmap-cell--active" : ""}`}
                           key={`${rowLabel}-${columnLabel}`}
                           style={getHeatmapCellStyle(value, maxAbsoluteValue)}
                           tabIndex={0}
+                          onBlur={hideTooltip}
+                          onFocus={(event) =>
+                            showTooltip(rowIndex, columnIndex, event.currentTarget)
+                          }
+                          onPointerEnter={(event) =>
+                            showTooltip(rowIndex, columnIndex, event.currentTarget)
+                          }
+                          onPointerLeave={(event) => {
+                            // A finger lifting also "leaves"; keep the card open after a tap.
+                            if (event.pointerType === "mouse") {
+                              hideTooltip();
+                            }
+                          }}
                         >
                           <span>{formatHeatmapValue(value)}</span>
-                          <div className="heatmap-tooltip">
-                            <p className="heatmap-tooltip__title">
-                              {formatFeatureLabel(rowLabel)} vs{" "}
-                              {formatHorizonLabel(columnLabel)}
-                            </p>
-                            <p>As of: {formatCellAsOf(asOfDate)}</p>
-                            <p>Spread: {formatHeatmapValue(value)}</p>
-                            <p>Q1: {formatHeatmapValue(q1Value)}</p>
-                            <p>Q5: {formatHeatmapValue(q5Value)}</p>
-                            <p>N obs: {formatObservationCount(nTotal)}</p>
-                            <p>Q1 obs: {formatObservationCount(nQ1)}</p>
-                            <p>Q5 obs: {formatObservationCount(nQ5)}</p>
-                          </div>
                         </div>
                       );
                     })}
@@ -365,7 +438,35 @@ export function MomentumOverview({
                 ))}
               </div>
             </div>
-          </>
+            {activeCell && matrix.rows[activeCell.row] && matrix.columns[activeCell.column] ? (
+              <div
+                className={`heatmap-tooltip${activeCell.below ? " heatmap-tooltip--below" : ""}`}
+                id={tooltipId}
+                role="tooltip"
+                style={{ left: activeCell.left, top: activeCell.top, width: activeCell.width }}
+              >
+                {(() => {
+                  const { row, column } = activeCell;
+                  const value = matrix.values[row]?.[column] ?? null;
+                  return (
+                    <>
+                      <p className="heatmap-tooltip__title">
+                        {formatFeatureLabel(matrix.rows[row])} vs{" "}
+                        {formatHorizonLabel(matrix.columns[column])}
+                      </p>
+                      <p>As of: {formatCellAsOf(matrix.as_of_dates[row]?.[column] ?? null)}</p>
+                      <p>Spread: {formatHeatmapValue(value)}</p>
+                      <p>Q1: {formatHeatmapValue(matrix.q1_values[row]?.[column] ?? null)}</p>
+                      <p>Q5: {formatHeatmapValue(matrix.q5_values[row]?.[column] ?? null)}</p>
+                      <p>N obs: {formatObservationCount(matrix.n_total[row]?.[column] ?? null)}</p>
+                      <p>Q1 obs: {formatObservationCount(matrix.n_q1[row]?.[column] ?? null)}</p>
+                      <p>Q5 obs: {formatObservationCount(matrix.n_q5[row]?.[column] ?? null)}</p>
+                    </>
+                  );
+                })()}
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </section>
