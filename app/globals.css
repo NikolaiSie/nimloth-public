@@ -1262,33 +1262,40 @@ svg {
 }
 
 .heatmap-cell:hover,
-.heatmap-cell:focus-visible {
+.heatmap-cell:focus-visible,
+.heatmap-cell--active {
   z-index: 6;
   outline: 1px solid var(--navy);
   filter: saturate(1.12);
   transform: scale(1.04);
 }
 
+/* Positions the tooltip; it lives here, outside the scrolling grid, so it is never clipped. */
+.heatmap-frame {
+  position: relative;
+  /* A grid item grows to its content by default; this keeps the grid scrolling inside the card. */
+  min-width: 0;
+}
+
+/* Placed by the component over the active cell; opens upward unless --below. */
 .heatmap-tooltip {
   position: absolute;
   z-index: 8;
-  bottom: calc(100% + 0.6rem);
-  left: 50%;
+  box-sizing: border-box;
   width: 13rem;
   padding: 0.85rem;
+  font-family: var(--ui);
+  font-variant-numeric: tabular-nums;
   color: var(--stone-light);
   border: 1px solid rgba(223, 200, 148, 0.35);
   background: rgba(7, 28, 47, 0.98);
   box-shadow: 0 16px 35px rgba(7, 28, 47, 0.28);
-  opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%);
-  transition: opacity 120ms ease;
+  transform: translateY(-100%);
 }
 
-.heatmap-cell:hover .heatmap-tooltip,
-.heatmap-cell:focus-visible .heatmap-tooltip {
-  opacity: 1;
+.heatmap-tooltip--below {
+  transform: none;
 }
 
 .heatmap-tooltip p {
@@ -1634,21 +1641,12 @@ svg {
     font-size: 0.74rem;
   }
 
-  /* Effects such as transform and filter create a containing block for a fixed
-     descendant. Keep both off so this card is sized against the viewport. */
+  /* No zoom on tap: the pinned metric column would cover a scaled cell's edge. */
   .heatmap-cell:hover,
-  .heatmap-cell:focus-visible {
+  .heatmap-cell:focus-visible,
+  .heatmap-cell--active {
     transform: none;
     filter: none;
-  }
-
-  .heatmap-tooltip {
-    position: fixed;
-    right: 0.75rem;
-    bottom: 1rem;
-    left: 0.75rem;
-    width: auto;
-    transform: none;
   }
 
   .site-footer__inner {
