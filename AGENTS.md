@@ -20,11 +20,12 @@ Node 24 or later.
 
 ```bash
 npm install
-cp .env.example .env.local   # mock data by default, no private access needed
 npm run dev
 npm run check                # lint, typecheck and tests; run before committing
 npm run build
 ```
+
+There is no mock data mode; `DATA_API_MODE` in `.env.example` isn't read by the code. Without `NIMLOTH_DATA_API_BASE_URL` and `NIMLOTH_DATA_API_KEY`, the pages still render and the routes under `app/api/` return 503 with a "temporarily unavailable" message. That's expected in cloud sessions, so check data views on nonprod after a push to `dev`.
 
 ## Branches and deploys
 
