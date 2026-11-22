@@ -142,6 +142,12 @@ export function MomentumOverview({
   const dateMenuRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [activeCell, setActiveCell] = useState<ActiveCell | null>(null);
+  // A new matrix closes the tooltip; adjusted during render rather than in an effect.
+  const [tooltipMatrix, setTooltipMatrix] = useState(matrix);
+  if (tooltipMatrix !== matrix) {
+    setTooltipMatrix(matrix);
+    setActiveCell(null);
+  }
   const activeCellElement = useRef<HTMLElement | null>(null);
   const tooltipId = useId();
 
@@ -192,10 +198,6 @@ export function MomentumOverview({
       showTooltip(activeCell.row, activeCell.column, cell);
     }
   }
-
-  useEffect(() => {
-    setActiveCell(null);
-  }, [matrix]);
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {

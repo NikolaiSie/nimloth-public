@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { getContentIndex } from "@/lib/content";
 
 type BlogArticlePageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export async function generateStaticParams() {
@@ -13,6 +13,6 @@ export async function generateStaticParams() {
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   redirect(`/research/${slug}`);
 }

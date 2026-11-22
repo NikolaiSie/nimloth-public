@@ -14,9 +14,9 @@ import {
 import { normalizeMomentumMatrixColumns } from "@/lib/momentum-matrix";
 
 type ResearchArticlePageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export async function generateStaticParams() {
@@ -31,7 +31,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: ResearchArticlePageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const article =
     (await getContentBySlug("research", slug)) ??
     (await getContentBySlug("blog", slug));
@@ -49,7 +49,7 @@ export async function generateMetadata({
 export default async function ResearchArticlePage({
   params,
 }: ResearchArticlePageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const article =
     (await getContentBySlug("research", slug)) ??
     (await getContentBySlug("blog", slug));

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCanonicalRedirectUrl } from "@/lib/canonical-url";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const requestHost =
     request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const redirectUrl = getCanonicalRedirectUrl({
