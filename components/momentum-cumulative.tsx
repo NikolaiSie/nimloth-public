@@ -114,8 +114,10 @@ function buildPlotPoints(points: CumulativePoint[]): PlotPoint[] {
 
 export function MomentumCumulative() {
   const [payload, setPayload] = useState<CumulativePayload | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Each settled request records its query, so a change of filters reads as loading
+  // (and hides the previous error) without resetting state inside the effect.
+  const [settledQuery, setSettledQuery] = useState<string | null>(null);
+  const [error, setError] = useState<{ query: string; message: string } | null>(null);
   const [start, setStart] = useState(CUMULATIVE_DEFAULT_START);
   const [country, setCountry] = useState("ALL");
   const [cap, setCap] = useState<Cap>("ALL");
@@ -138,14 +140,12 @@ export function MomentumCumulative() {
     return () => observer.disconnect();
   }, []);
 
+  const query = new URLSearchParams({ country, cap, aggregation, signal, start }).toString();
+
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({ country, cap, aggregation, signal, start });
 
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    fetch(`/api/research/momentum/cumulative?${params.toString()}`)
+    fetch(`/api/research/momentum/cumulative?${query}`)
       .then(async (response) => {
         const data = (await response.json()) as CumulativePayload | { message?: string };
         if (!response.ok) {
@@ -157,26 +157,32 @@ export function MomentumCumulative() {
         }
         if (!ignore) {
           setPayload(data as CumulativePayload);
+          setError(null);
           setHoverIndex(null);
         }
       })
       .catch((error: unknown) => {
         if (!ignore) {
-          setErrorMessage(
-            error instanceof Error ? error.message : "Cumulative momentum data could not be loaded.",
-          );
+          setError({
+            query,
+            message:
+              error instanceof Error ? error.message : "Cumulative momentum data could not be loaded.",
+          });
         }
       })
       .finally(() => {
         if (!ignore) {
-          setIsLoading(false);
+          setSettledQuery(query);
         }
       });
 
     return () => {
       ignore = true;
     };
-  }, [aggregation, cap, country, signal, start]);
+  }, [query]);
+
+  const isLoading = settledQuery !== query;
+  const errorMessage = error?.query === query ? error.message : null;
 
   const plotPoints = useMemo(() => buildPlotPoints(payload?.points ?? []), [payload]);
   const lineHeight = width < 520 ? 260 : 340;
