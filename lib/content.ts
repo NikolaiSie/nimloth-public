@@ -1,8 +1,13 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import rehypeKatex from "rehype-katex";
+import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
 import { remark } from "remark";
-import html from "remark-html";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import remarkRehype from "remark-rehype";
 import { z } from "zod";
 
 const frontmatterSchema = z.object({
@@ -69,8 +74,29 @@ function splitAtEmbedMarkers(content: string): RawSegment[] {
   );
 }
 
+// `$...$` and `$$...$$` are TeX math. The markdown is sanitized first, so raw HTML
+// in a post is stripped, and KaTeX then renders the math nodes sanitize let through
+// (remark-math marks them with the `math-inline` and `math-display` classes).
+const mathSafeSchema: SanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [
+      ...(defaultSchema.attributes?.code ?? []),
+      ["className", "math-inline", "math-display", /^language-./u],
+    ],
+  },
+};
+
 async function renderMarkdown(markdown: string) {
-  const rendered = await remark().use(html, { sanitize: true }).process(markdown);
+  const rendered = await remark()
+    .use(remarkGfm)
+    .use(remarkMath)
+    .use(remarkRehype)
+    .use(rehypeSanitize, mathSafeSchema)
+    .use(rehypeKatex, { output: "html" })
+    .use(rehypeStringify)
+    .process(markdown);
   // Paragraphs starting with "*" (written `\*` in markdown) are footnote-style notes.
   // The class is added after sanitizing, so it can't be injected from markdown.
   return rendered.toString().replace(/<p>\*/gu, '<p class="note">*');

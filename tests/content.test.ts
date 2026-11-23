@@ -16,6 +16,7 @@ describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
     expect(posts.map((post) => post.slug)).toEqual([
+      "cleaning-the-covariance-matrix",
       "momentum",
       "why-i-am-building-nimloth",
     ]);
@@ -57,6 +58,46 @@ describe("content loading", () => {
       expect(htmlOf(article)).not.toContain("<script>");
       expect(htmlOf(article)).not.toContain("onerror=");
       expect(htmlOf(article)).not.toContain("javascript:alert");
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("renders TeX math with KaTeX and still strips raw html", async () => {
+    const slug = "math-rendering-test";
+    const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
+
+    try {
+      await fs.writeFile(
+        filePath,
+        [
+          "---",
+          "title: Math",
+          "summary: Test fixture",
+          "publishedAt: 2026-07-30",
+          "---",
+          "",
+          "Inline $\\lambda_k$ and a display:",
+          "",
+          "$$",
+          "\\xi_k = \\frac{\\lambda_k}{q}",
+          "$$",
+          "",
+          "<img src=\"x\" onerror=\"alert('xss')\">",
+          "",
+          "```python",
+          "x = 1",
+          "```",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const html = htmlOf(await getContentBySlug("research", slug));
+      expect(html).toContain('class="katex"');
+      expect(html).toContain('class="katex-display"');
+      expect(html).not.toContain("$$");
+      expect(html).not.toContain("onerror=");
+      expect(html).toContain('class="language-python"');
     } finally {
       await fs.unlink(filePath).catch(() => undefined);
     }

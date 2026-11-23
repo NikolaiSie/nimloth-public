@@ -806,6 +806,84 @@ svg {
   mix-blend-mode: multiply;
 }
 
+/* Long display equations scroll sideways on phones instead of widening the page. */
+.prose .katex-display {
+  margin: 1.75rem 0;
+  padding: 0.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.prose .katex {
+  font-size: 1.08em;
+}
+
+/* Wide tables scroll sideways inside the article instead of widening the page. */
+.prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  /* Up to the full article width, like the figures, before it scrolls. */
+  max-width: 100cqi;
+  margin: 1.75rem 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-family: var(--ui);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 0.6rem;
+  /* A shadow on each edge that has more table behind it: the stone-coloured covers scroll with the
+     content (local) and hide the shadows (scroll) once that edge is reached. */
+  background:
+    linear-gradient(to right, var(--stone-light) 30%, rgba(248, 244, 235, 0)) left center / 3rem 100% no-repeat local,
+    linear-gradient(to left, var(--stone-light) 30%, rgba(248, 244, 235, 0)) right center / 3rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(7, 28, 47, 0.22), rgba(7, 28, 47, 0)) left center / 1rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(7, 28, 47, 0.22), rgba(7, 28, 47, 0)) right center / 1rem 100% no-repeat scroll;
+}
+
+/* An always-visible scrollbar in the site colours. macOS otherwise hides it until you scroll, so a
+   table cut off at the right edge looks like it simply ends. */
+.prose table::-webkit-scrollbar {
+  height: 8px;
+}
+
+.prose table::-webkit-scrollbar-track {
+  background: rgba(7, 28, 47, 0.08);
+  border-radius: 4px;
+}
+
+.prose table::-webkit-scrollbar-thumb {
+  background: var(--sea);
+  border-radius: 4px;
+}
+
+/* Firefox has no ::-webkit-scrollbar. Chrome ignores it when scrollbar-color is set, so set that only here. */
+@supports not selector(::-webkit-scrollbar) {
+  .prose table {
+    scrollbar-color: var(--sea) rgba(7, 28, 47, 0.08);
+  }
+}
+
+.prose th,
+.prose td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom-color: var(--ink);
+}
+
+.prose td:last-child {
+  min-width: 18rem;
+}
+
 .prose p.note {
   color: var(--muted);
   font-size: 0.92rem;

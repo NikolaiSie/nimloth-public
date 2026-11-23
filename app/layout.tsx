@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +23,8 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    // Browser extensions add attributes to <html> before React loads; this ignores them on this element only.
+    <html lang="en" suppressHydrationWarning>
       <body>
         <div className="site-shell">
           <Header />
