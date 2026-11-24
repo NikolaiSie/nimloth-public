@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 280" role="img" aria-labelledby="title desc">
+  <title id="title">The five boxes of a systematic strategy</title>
+  <desc id="desc">Data feeds research and risk. Both feed optimization, optimization sends the portfolio to trading, and trading feeds cost estimates back to optimization.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#071c2f"/>
+    </marker>
+    <marker id="arrow-sea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#1f6877"/>
+    </marker>
+    <style>
+      .box { fill: #f8f4eb; stroke: #071c2f; stroke-width: 1.5; }
+      .title { font-family: Baskerville, "Iowan Old Style", "Palatino Linotype", Georgia, serif; font-size: 30px; fill: #071c2f; text-anchor: middle; }
+      .flow { fill: none; stroke: #071c2f; stroke-width: 1.6; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #1f6877; stroke-width: 1.6; stroke-dasharray: 5 4; marker-end: url(#arrow-sea); }
+      .note { font-family: Optima, Candara, "Gill Sans", "Trebuchet MS", sans-serif; font-size: 19px; fill: #1f6877; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Data, the source -->
+  <rect x="8" y="104" width="132" height="72" rx="4" fill="#071c2f"/>
+  <text class="title" x="74" y="150" style="fill:#f8f4eb">Data</text>
+
+  <rect class="box" x="188" y="20" width="160" height="72" rx="4"/>
+  <text class="title" x="268" y="66">Research</text>
+
+  <rect class="box" x="188" y="188" width="160" height="72" rx="4"/>
+  <text class="title" x="268" y="234">Risk</text>
+
+  <rect class="box" x="396" y="104" width="204" height="72" rx="4"/>
+  <text class="title" x="498" y="150">Optimization</text>
+
+  <rect class="box" x="640" y="104" width="132" height="72" rx="4"/>
+  <text class="title" x="706" y="150">Trading</text>
+
+  <path class="flow" d="M140 128 C166 128 162 56 186 56"/>
+  <path class="flow" d="M140 152 C166 152 162 224 186 224"/>
+  <path class="flow" d="M348 56 C376 56 370 128 394 128"/>
+  <path class="flow" d="M348 224 C376 224 370 152 394 152"/>
+  <path class="flow" d="M600 140 H638"/>
+
+  <!-- Trading costs feed back into the optimizer -->
+  <path class="feedback" d="M706 176 C706 236 550 236 550 179"/>
+  <text class="note" x="628" y="262">cost estimates</text>
+</svg>

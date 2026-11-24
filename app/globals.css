@@ -835,6 +835,11 @@ svg {
   mix-blend-mode: multiply;
 }
 
+/* Drawn diagrams keep a readable size instead of spanning the whole article. */
+.prose img[src$=".svg"] {
+  width: min(100cqi, 44rem);
+}
+
 /* Long display equations scroll sideways on phones instead of widening the page. */
 .prose .katex-display {
   margin: 1.75rem 0;
