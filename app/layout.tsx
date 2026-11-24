@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { SITE_URL } from "@/lib/site";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -11,9 +12,22 @@ export const metadata: Metadata = {
   },
   description:
     "Public blog, engineering notes, and market experiments from Nimloth Capital.",
-  metadataBase: new URL("https://nimlothcapital.com"),
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "./",
+  },
+  // Link previews on LinkedIn, X and messaging apps. The card images come from opengraph-image.tsx.
+  openGraph: {
+    type: "website",
+    siteName: "Nimloth Capital",
+    locale: "en_US",
+    title: "Nimloth Capital",
+    description:
+      "Public blog, engineering notes, and market experiments from Nimloth Capital.",
+    url: "./",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 

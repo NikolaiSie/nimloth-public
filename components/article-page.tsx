@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { ShareLinks } from "@/components/share-links";
 import type { ContentEntry, EmbedName } from "@/lib/content";
 
 type ArticlePageProps = {
@@ -20,6 +21,7 @@ export function ArticlePage({ article, sectionLabel, embeds = {} }: ArticlePageP
           <span>{article.publishedAtLabel}</span>
           <span>{article.readingTimeLabel}</span>
         </div>
+        <ShareLinks slug={article.slug} title={article.title} summary={article.summary} />
       </section>
       <article className="article">
         {article.segments.map((segment, index) => {
@@ -36,6 +38,12 @@ export function ArticlePage({ article, sectionLabel, embeds = {} }: ArticlePageP
             />
           );
         })}
+        <ShareLinks
+          className="share-links--end"
+          slug={article.slug}
+          title={article.title}
+          summary={article.summary}
+        />
       </article>
     </div>
   );

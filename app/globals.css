@@ -788,6 +788,35 @@ svg {
   margin-bottom: 0.5rem;
 }
 
+/* Numbered citations, e.g. [2], link to the reference list. */
+.prose a.citation {
+  text-decoration: none;
+}
+
+.prose a.citation:hover,
+.prose a.citation:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+}
+
+/* Clear of the sticky header when a citation jumps here, and marked for a moment. */
+.prose li[id^="ref-"] {
+  scroll-margin-top: 7rem;
+}
+
+.prose li[id^="ref-"]:target {
+  animation: reference-target 2.4s ease-out;
+}
+
+@keyframes reference-target {
+  from {
+    background: rgba(189, 152, 87, 0.28);
+  }
+  to {
+    background: transparent;
+  }
+}
+
 .article {
   container-type: inline-size;
 }
@@ -1761,4 +1790,73 @@ svg {
   .research-filter {
     padding: 0.7rem;
   }
+}
+
+/* Share links: icon links to each network's share page, after the article metadata. */
+.share-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+  font-family: var(--ui);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.share-links__label {
+  margin-right: 0.35rem;
+  color: var(--muted);
+}
+
+/* The icons wrap alongside the label rather than under it. */
+.share-links ul {
+  display: contents;
+}
+
+.share-links li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.share-links__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--navy);
+  background: none;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.share-links__icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.share-links__icon:hover,
+.share-links__icon:focus-visible {
+  color: var(--stone-light);
+  border-color: var(--sea);
+  background: var(--sea);
+}
+
+.share-links__status {
+  color: var(--sea);
+}
+
+.share-links__status:empty {
+  display: none;
+}
+
+.share-links--end {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
