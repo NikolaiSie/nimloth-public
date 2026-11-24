@@ -16,20 +16,20 @@ describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
     expect(posts.map((post) => post.slug)).toEqual([
-      "cleaning-the-covariance-matrix",
-      "momentum",
-      "why-i-am-building-nimloth",
+      "risk-without-factors",
+      "momentum-in-global-data",
+      "systematics-from-end-to-end",
     ]);
   });
 
   it("labels a post with its own calendar date in any time zone", async () => {
     // "2026-11-09" is midnight UTC; formatting it in a zone west of UTC used to give November 8.
     const posts = await getContentIndex("blog");
-    expect(posts.find((post) => post.slug === "momentum")?.publishedAtLabel).toBe("November 9, 2026");
+    expect(posts.find((post) => post.slug === "momentum-in-global-data")?.publishedAtLabel).toBe("November 9, 2026");
   });
 
   it("renders article markdown into html", async () => {
-    const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
+    const article = await getContentBySlug("blog", "systematics-from-end-to-end");
     expect(article).not.toBeNull();
     expect(htmlOf(article)).toContain("<p>");
   });
@@ -151,7 +151,7 @@ describe("content loading", () => {
   });
 
   it("links the momentum post's author-year citations to its references", async () => {
-    const html = htmlOf(await getContentBySlug("blog", "momentum"));
+    const html = htmlOf(await getContentBySlug("blog", "momentum-in-global-data"));
     expect(html).toContain('(<a href="#ref-ince-2006" class="citation">Ince &#x26; Porter, 2006</a>)');
     expect(html).toContain('<a href="#ref-han-2016" class="citation">Han, Zhou &#x26; Zhu, 2016</a>');
     expect(html).toContain('month; <a href="#ref-jegadeesh-1990" class="citation">Jegadeesh, 1990</a>)');
@@ -200,7 +200,7 @@ describe("content loading", () => {
   });
 
   it("links the covariance post's narrative and parenthetical citations", async () => {
-    const html = htmlOf(await getContentBySlug("blog", "cleaning-the-covariance-matrix"));
+    const html = htmlOf(await getContentBySlug("blog", "risk-without-factors"));
     expect(html).toContain('<a href="#ref-bun-2017" class="citation">Bun, Bouchaud and Potters (2017)</a>');
     expect(html).toContain('<a href="#ref-boyd-2017" class="citation">Boyd et al. (2017)</a>');
     expect(html).toContain('<a href="#ref-xiao-2024" class="citation">Xiao et al., 2024</a>');
@@ -264,18 +264,18 @@ describe("content loading", () => {
   });
 
   it("renders a post without markers as a single html segment", async () => {
-    const article = await getContentBySlug("blog", "why-i-am-building-nimloth");
+    const article = await getContentBySlug("blog", "systematics-from-end-to-end");
     expect(article?.segments.map((segment) => segment.kind)).toEqual(["html"]);
   });
 
   it("marks paragraphs starting with an asterisk as notes", async () => {
-    const article = await getContentBySlug("blog", "momentum");
+    const article = await getContentBySlug("blog", "momentum-in-global-data");
     expect(htmlOf(article)).toContain('<p class="note">* The columns have forward returns');
     expect(htmlOf(article)).not.toContain('<p class="note">Data is');
   });
 
   it("places the momentum post's embeds in order", async () => {
-    const article = await getContentBySlug("blog", "momentum");
+    const article = await getContentBySlug("blog", "momentum-in-global-data");
     const embeds = (article?.segments ?? []).flatMap((segment) =>
       segment.kind === "embed" ? [segment.name] : [],
     );

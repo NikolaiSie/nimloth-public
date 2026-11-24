@@ -4,6 +4,12 @@ const scriptSrc =
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     : "script-src 'self' 'unsafe-inline'";
 
+const renamedPosts = {
+  "cleaning-the-covariance-matrix": "risk-without-factors",
+  momentum: "momentum-in-global-data",
+  "why-i-am-building-nimloth": "systematics-from-end-to-end",
+};
+
 /** @type {import("next").NextConfig} */
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -22,6 +28,14 @@ const contentSecurityPolicy = [
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // Posts were renamed to match their titles. Keep links shared under the old slugs working.
+  async redirects() {
+    return Object.entries(renamedPosts).flatMap(([from, to]) => [
+      { source: `/research/${from}`, destination: `/research/${to}`, permanent: true },
+      { source: `/blog/${from}`, destination: `/research/${to}`, permanent: true },
+      { source: `/blog/${from}/:file`, destination: `/blog/${to}/:file`, permanent: true },
+    ]);
+  },
   async headers() {
     return [
       {
