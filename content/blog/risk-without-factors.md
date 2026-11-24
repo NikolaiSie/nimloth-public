@@ -18,7 +18,7 @@ The nice thing is that we don't need to model the risk of the whole universe, on
 
 The models take well-tested anomalies as input: momentum, reversal, value factors, accruals, country/sector categories, and more. For test date 2026-11-20, the union of the two models' picks gives 323 candidates. Here's the sample correlation I take as a baseline risk model. With no country constraints, the models love the US, Canada, and Taiwan at the moment.
 
-![Sample correlation of weekly returns of the candidates, grouped by country and sector](/blog/cleaning-the-covariance-matrix/correlation-matrix.png)
+![Sample correlation of weekly returns of the candidates, grouped by country and sector](/blog/risk-without-factors/correlation-matrix.png)
 
 I use weekly returns because the trading days in Asia and the US don't overlap, so their correlations are often meaningless. I use two years because a longer window would include outdated data. That gives us 104 observations for the 316 stocks with a full two-year history, which is not enough, so 213 of the eigenvalues are 0. This is the other reason people use factor models.
 
@@ -39,13 +39,13 @@ $$
 
 Since $q > 1$, most eigenvalues are 0 and only 103 are above 0. Most of the non-zero ones are inside the Marchenko–Pastur band and 7 are above it, which suggests we have 7 risk factors with signal and 96 noise factors.
 
-![Non-zero eigenvalues against the Marchenko–Pastur law](/blog/cleaning-the-covariance-matrix/eigenvalues.png)
+![Non-zero eigenvalues against the Marchenko–Pastur law](/blog/risk-without-factors/eigenvalues.png)
 
 ### c. Eigenvectors
 
 Each eigenvector $u_k$ has one component for each stock, and reads as a long-short portfolio: the stocks with positive components tend to move together against those with negative ones, relative to the rest of the eigenspace. The market vector is the strongest, with all stocks loading on it in the same direction, and its eigenvalue is 58. The next four signal eigenvectors have these country and sector tilts:
 
-![Country and sector loadings of eigenvectors u2 to u5](/blog/cleaning-the-covariance-matrix/eigenvector-heatmaps.png)
+![Country and sector loadings of eigenvectors u2 to u5](/blog/risk-without-factors/eigenvector-heatmaps.png)
 
 So the most powerful factors in our candidate universe are:
 
@@ -61,7 +61,7 @@ Leading papers describe eigenvalues inside the Marchenko–Pastur band as more o
 
 The baseline is 5,000 random groups drawn from the liquid universe's companies with an earnings call transcript. Each group of top stocks is scored by its similarity percentile among the random groups.
 
-![Full liquid universe: earnings-call similarity of the 30 largest modes' groups against 5,000 random groups](/blog/cleaning-the-covariance-matrix/similarity-percentiles-liquid.png)
+![Full liquid universe: earnings-call similarity of the 30 largest modes' groups against 5,000 random groups](/blog/risk-without-factors/similarity-percentiles-liquid.png)
 
 The big similarity cluster lies at the top of the range, as we should expect. Some standouts are gold miners and defense, which have seen intense moves over the last two years. Two groups that lie inside the Marchenko–Pastur band clear the 95th percentile hurdle in similarity: Argentine stocks and network security / power infrastructure. Intuitively these should be signal factors, even if their correlations aren't strong enough to clear the Marchenko–Pastur edge. Out of the 15 groups below the edge, chance alone would put 0.75 above the 95th percentile, and two or more 17% of the time, so this isn't proof on its own. But the 95th percentile is a strict hurdle, and some other groups get close and may well move together in the future.
 
@@ -90,17 +90,17 @@ $$
 
 with the common value $\hat\xi_0$ for all zero eigenvalues (Appendix C of the supplement to Ledoit & Wolf, 2020).
 
-![Cleaned against sample eigenvalues](/blog/cleaning-the-covariance-matrix/cleaned-eigenvalues.png)
+![Cleaned against sample eigenvalues](/blog/risk-without-factors/cleaned-eigenvalues.png)
 
 As expected, cleaning shrinks the large eigenvalues and most correlations, and gives the zero eigenvalues a common value below 1.
 
-![Each cleaned matrix minus the sample one, and every pair's cleaned correlation against its sample value](/blog/cleaning-the-covariance-matrix/cleaned-minus-sample.png)
+![Each cleaned matrix minus the sample one, and every pair's cleaned correlation against its sample value](/blog/risk-without-factors/cleaned-minus-sample.png)
 
 ### b. Backtest
 
 I run a long-only backtest three times, once each with the sample, Bun et al. and Ledoit–Wolf risk models. Stock selection is done out-of-sample over the past year by neural net predictions over 5-day and 1-month forward horizons, and portfolio construction is done using multi-period optimization as in Boyd et al. (2017). Trade costs combine fee schedules by market and from Interactive Brokers, and impact costs are quadratic. The main constraint is portfolio beta held close to 1, as measured versus a custom index from the global liquid universe over FMP and EODHD data. What we want to see from the cleaned risk models is lower volatility and higher Sharpe, hopefully without losing absolute returns.
 
-![Cumulative return after costs against the universe index, realized and predicted volatility, and effective number of positions with each covariance matrix](/blog/cleaning-the-covariance-matrix/backtest.png)
+![Cumulative return after costs against the universe index, realized and predicted volatility, and effective number of positions with each covariance matrix](/blog/risk-without-factors/backtest.png)
 
 ### c. Results
 

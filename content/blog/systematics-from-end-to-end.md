@@ -11,7 +11,7 @@ featured: true
 
 Nimloth Capital is a project that fits in 5 boxes, which span the whole work of systematic investing: Data, Research, Risk, Optimization, and Trading. Anything else is noise or business, so everything I write will fit into a box. Each of these 5 is a big job, but they are all that's needed to beat the stock market.
 
-![The five boxes: data feeds research and risk, both feed optimization, optimization feeds trading, and trading's cost estimates feed back into optimization.](/blog/why-i-am-building-nimloth/five-boxes.svg)
+![The five boxes: data feeds research and risk, both feed optimization, optimization feeds trading, and trading's cost estimates feed back into optimization.](/blog/systematics-from-end-to-end/five-boxes.svg)
 
 Data is the blood, and everyone needs to treat it with respect. It doesn't take many bad data points to ruin a model. Not all operators have good data quality. That means for the ones who do, data quality is a competitive edge. 
 

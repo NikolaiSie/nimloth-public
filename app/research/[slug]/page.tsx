@@ -76,7 +76,7 @@ export default async function ResearchArticlePage({
     notFound();
   }
 
-  if (slug !== "momentum") {
+  if (slug !== "momentum-in-global-data") {
     return <ArticlePage article={article} sectionLabel="Blog" />;
   }
 
