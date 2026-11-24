@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
 import { SectionHeading } from "@/components/section-heading";
-import { compareContentNewestFirst, getFeaturedPosts } from "@/lib/content";
+import { compareContentNewestFirst, getContentIndex } from "@/lib/content";
 
 export default async function HomePage() {
-  const [featuredPosts, featuredResearch] = await Promise.all([
-    getFeaturedPosts("blog", 2),
-    getFeaturedPosts("research", 2),
+  // The two newest posts. Everything on the site is labelled "Blog", wherever its file lives.
+  const [posts, research] = await Promise.all([
+    getContentIndex("blog"),
+    getContentIndex("research"),
   ]);
-  const featuredEntries = [...featuredResearch, ...featuredPosts].sort(
-    compareContentNewestFirst,
-  );
+  const latestEntries = [...posts, ...research].sort(compareContentNewestFirst).slice(0, 2);
 
   return (
     <>
@@ -71,7 +70,7 @@ export default async function HomePage() {
             link={{ href: "/research", label: "View blog" }}
           />
           <div className="article-list">
-            {featuredEntries.map((article) => (
+            {latestEntries.map((article) => (
               <ArticleCard
                 key={article.slug}
                 article={article}
