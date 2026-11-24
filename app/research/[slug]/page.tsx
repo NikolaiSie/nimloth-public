@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticlePage } from "@/components/article-page";
 import { MomentumCumulative } from "@/components/momentum-cumulative";
@@ -40,10 +41,27 @@ export async function generateMetadata({
     return {};
   }
 
+  // Open Graph and Twitter fields replace the layout's rather than merging, so the site-wide ones
+  // are repeated here. The card image comes from opengraph-image.tsx next to this page.
   return {
     title: article.title,
     description: article.summary,
-  };
+    openGraph: {
+      type: "article",
+      siteName: "Nimloth Capital",
+      locale: "en_US",
+      title: article.title,
+      description: article.summary,
+      url: `/research/${slug}`,
+      publishedTime: article.publishedAt,
+      tags: article.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.summary,
+    },
+  } satisfies Metadata;
 }
 
 export default async function ResearchArticlePage({

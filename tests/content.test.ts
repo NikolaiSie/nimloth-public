@@ -16,9 +16,16 @@ describe("content loading", () => {
   it("sorts blog content newest first", async () => {
     const posts = await getContentIndex("blog");
     expect(posts.map((post) => post.slug)).toEqual([
+      "cleaning-the-covariance-matrix",
       "momentum",
       "why-i-am-building-nimloth",
     ]);
+  });
+
+  it("labels a post with its own calendar date in any time zone", async () => {
+    // "2026-11-09" is midnight UTC; formatting it in a zone west of UTC used to give November 8.
+    const posts = await getContentIndex("blog");
+    expect(posts.find((post) => post.slug === "momentum")?.publishedAtLabel).toBe("November 9, 2026");
   });
 
   it("renders article markdown into html", async () => {
@@ -59,6 +66,147 @@ describe("content loading", () => {
       expect(htmlOf(article)).not.toContain("javascript:alert");
     } finally {
       await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("renders TeX math with KaTeX and still strips raw html", async () => {
+    const slug = "math-rendering-test";
+    const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
+
+    try {
+      await fs.writeFile(
+        filePath,
+        [
+          "---",
+          "title: Math",
+          "summary: Test fixture",
+          "publishedAt: 2026-07-30",
+          "---",
+          "",
+          "Inline $\\lambda_k$ and a display:",
+          "",
+          "$$",
+          "\\xi_k = \\frac{\\lambda_k}{q}",
+          "$$",
+          "",
+          "<img src=\"x\" onerror=\"alert('xss')\">",
+          "",
+          "```python",
+          "x = 1",
+          "```",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const html = htmlOf(await getContentBySlug("research", slug));
+      expect(html).toContain('class="katex"');
+      expect(html).toContain('class="katex-display"');
+      expect(html).not.toContain("$$");
+      expect(html).not.toContain("onerror=");
+      expect(html).toContain('class="language-python"');
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("links numbered citations to the reference list", async () => {
+    const slug = "citation-links-test";
+    const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
+
+    try {
+      await fs.writeFile(
+        filePath,
+        [
+          "---",
+          "title: Citations",
+          "summary: Test fixture",
+          "publishedAt: 2026-07-30",
+          "---",
+          "",
+          "One source [1], two sources [1, 2], and [3] has no reference.",
+          "",
+          "Math stays math: $x_{[1]}$ and `code [2]`.",
+          "",
+          "## References",
+          "",
+          "1. First, A. (2020). A paper.",
+          "2. Second, B. (2021). Another paper.",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const html = htmlOf(await getContentBySlug("research", slug));
+      expect(html).toContain('[<a href="#ref-1" class="citation">1</a>]');
+      expect(html).toContain(
+        '[<a href="#ref-1" class="citation">1</a>, <a href="#ref-2" class="citation">2</a>]',
+      );
+      expect(html).toContain("[3] has no reference");
+      expect(html).toContain("<code>code [2]</code>");
+      expect(html).not.toContain('href="#ref-1" class="citation">1</a>]</span>');
+      expect(html).toContain('<li id="ref-1">');
+      expect(html).toContain('<li id="ref-2">');
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("links the momentum post's author-year citations to its references", async () => {
+    const html = htmlOf(await getContentBySlug("blog", "momentum"));
+    expect(html).toContain('(<a href="#ref-ince-2006" class="citation">Ince &#x26; Porter, 2006</a>)');
+    expect(html).toContain('<a href="#ref-han-2016" class="citation">Han, Zhou &#x26; Zhu, 2016</a>');
+    expect(html).toContain('month; <a href="#ref-jegadeesh-1990" class="citation">Jegadeesh, 1990</a>)');
+    for (const key of ["daniel-2016", "dichev-2011", "han-2016", "ince-2006", "jegadeesh-1990"]) {
+      expect(html).toContain(`<li id="ref-${key}">`);
+      expect(html).toContain(`href="#ref-${key}"`);
+    }
+    // A date is not a citation, and the reference list doesn't link to itself.
+    expect(html).toContain("(Nov 7, 2026)");
+    expect(html.match(/class="citation"/gu)).toHaveLength(5);
+  });
+
+  it("links only author-year citations that match a reference", async () => {
+    const slug = "author-year-test";
+    const filePath = path.join(process.cwd(), "content", "research", `${slug}.md`);
+
+    try {
+      await fs.writeFile(
+        filePath,
+        [
+          "---",
+          "title: Author-year",
+          "summary: Test fixture",
+          "publishedAt: 2026-07-30",
+          "---",
+          "",
+          "Cited (Smith et al., 2020) and (Müller and Jones, 2019), but not (Brown, 2001) or [1].",
+          "",
+          "## References",
+          "",
+          "- Smith, A., Lee, B., & Kim, C. (2020). A paper.",
+          "- Müller, D., & Jones, E. (2019). Another paper.",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const html = htmlOf(await getContentBySlug("research", slug));
+      expect(html).toContain('<a href="#ref-smith-2020" class="citation">Smith et al., 2020</a>');
+      expect(html).toContain('<a href="#ref-muller-2019" class="citation">Müller and Jones, 2019</a>');
+      expect(html).toContain("(Brown, 2001) or [1]");
+      expect(html).toContain('<li id="ref-smith-2020">');
+      expect(html).toContain('<li id="ref-muller-2019">');
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  });
+
+  it("links the covariance post's narrative and parenthetical citations", async () => {
+    const html = htmlOf(await getContentBySlug("blog", "cleaning-the-covariance-matrix"));
+    expect(html).toContain('<a href="#ref-bun-2017" class="citation">Bun, Bouchaud and Potters (2017)</a>');
+    expect(html).toContain('<a href="#ref-boyd-2017" class="citation">Boyd et al. (2017)</a>');
+    expect(html).toContain('<a href="#ref-xiao-2024" class="citation">Xiao et al., 2024</a>');
+    for (const key of ["boyd-2017", "bun-2017", "ledoit-2020", "marchenko-1967", "plerou-2002", "reimers-2019", "xiao-2024"]) {
+      expect(html).toContain(`<li id="ref-${key}">`);
+      expect(html).toContain(`href="#ref-${key}"`);
     }
   });
 
