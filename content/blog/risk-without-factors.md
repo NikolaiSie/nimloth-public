@@ -20,7 +20,7 @@ The models take well-tested anomalies as input: momentum, reversal, value factor
 
 ![Sample correlation of weekly returns of the candidates, grouped by country and sector](/blog/risk-without-factors/correlation-matrix.png)
 
-I use weekly returns because the trading days in Asia and the US don't overlap, so their correlations are often meaningless. I use two years because a longer window would include outdated data. That gives us 104 observations for the 316 stocks with a full two-year history, which is not enough, so 213 of the eigenvalues are 0. This is the other reason people use factor models.
+I use weekly returns because the trading days in Asia and the US don't overlap, so their daily correlations are often meaningless. I use two years because a longer window would include outdated data. That gives us 104 observations for the 316 stocks with a full two-year history, which is not enough, so 213 of the eigenvalues are 0. This is the other reason people use factor models.
 
 Two papers try to solve this. Bun, Bouchaud and Potters (2017) use RMT to find an optimal estimator of the true (population) correlation matrix from a sample matrix, and Ledoit and Wolf (2020) give an estimator that also works with more stocks than observations.
 
